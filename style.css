@@ -385,11 +385,23 @@
   }
   
   .cv-header {
-    border-bottom: 2px solid #f39c12;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
   }
   
+  .cv-header-text {
+    flex: 1;
+  }
+
+  .cv-header img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+
   .cv-header h3 {
     font-size: 2rem;
     margin-bottom: 0.5rem;
@@ -399,6 +411,7 @@
     font-size: 0.9rem;
     color: #666;
   }
+  
   
   .cv-summary, .cv-experience, .cv-education, .cv-skills {
     margin-bottom: 2rem;
@@ -858,3 +871,218 @@
     background-color: rgba(0, 0, 0, 0.05);
     border-radius: 4px;
   }
+  /* Añade estos estilos al final de tu archivo CSS */
+
+/* Animaciones generales */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Aplicar animaciones a elementos clave */
+.story-section {
+  animation: fadeIn 0.8s ease-out;
+}
+
+.text-block {
+  animation: slideUp 0.7s ease-out;
+}
+
+/* Mejorar hover states */
+.cv-type-card:hover, .cv-style-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Efecto de selección para tarjetas seleccionadas */
+.cv-type-card.selected, .cv-style-card.selected {
+  animation: pulse 0.5s;
+  border: 2px solid #f39c12;
+  background: linear-gradient(to bottom right, rgba(243, 156, 18, 0.1), rgba(243, 156, 18, 0.05));
+}
+
+/* Efecto hover para botones */
+.next-section-btn:hover, .download-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Animación para botones cuando se hace clic */
+.next-section-btn:active, .download-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mejora visual para las secciones activas */
+.progress-step.active {
+  animation: pulse 1s infinite;
+}
+
+/* Transición de temas más suave */
+body {
+  transition: background-color 0.8s ease, color 0.8s ease;
+}
+
+/* Añadir botón de modo oscuro/claro */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  transform: rotate(30deg);
+}
+
+.theme-toggle i {
+  font-size: 20px;
+  color: #333;
+}
+
+/* Estilos para modo oscuro */
+body.dark-mode {
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+}
+
+body.dark-mode .text-block {
+  background: rgba(40, 40, 60, 0.97);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .cv-type-card,
+body.dark-mode .cv-style-card {
+  background: #2a2a3c;
+  color: #e0e0e0;
+}
+
+body.dark-mode .cv-type-card p,
+body.dark-mode .cv-style-card p {
+  color: #aaa;
+}
+
+body.dark-mode .next-section-btn,
+body.dark-mode .download-btn {
+  background: #3a3a5c;
+  color: #fff;
+}
+
+body.dark-mode input, 
+body.dark-mode textarea {
+  background: #2a2a3c;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+body.dark-mode .form-subgroup {
+  background: #222236;
+}
+
+/* Mejora de la barra de progreso */
+.progress-bar-fill {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  background: linear-gradient(90deg, #f39c12, #f1c40f, #f39c12);
+  background-size: 200% auto;
+  animation: gradientShift 3s linear infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% center; }
+  50% { background-position: 100% center; }
+  100% { background-position: 0% center; }
+}
+
+/* Spinner mejorado para carga */
+.spinner {
+  border: 5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 5px solid #f39c12;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+/* Mejorar visibilidad de menú y barra de progreso */
+.progress-bar {
+  will-change: transform; /* Indica al navegador que este elemento cambiará */
+  transform: translateZ(0); /* Fuerza la aceleración de hardware */
+  backface-visibility: hidden; /* Ayuda a prevenir glitches visuales */
+  perspective: 1000; /* Mejora el rendimiento */
+  z-index: 9999; /* Asegura que esté por encima de otros elementos */
+  pointer-events: auto !important; /* Asegura que reciba eventos de ratón */
+}
+
+/* Aplicar los mismos estilos a otros menús fijos */
+.theme-toggle, .fixed-menu {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
+  z-index: 9999;
+}
+/* Añade estos estilos al final de tu archivo CSS */
+
+/* Asegura que las secciones sean siempre visibles cuando están en viewport */
+.story-section {
+  min-height: 100vh; /* Asegura altura mínima para llenar viewport */
+  will-change: opacity, transform; /* Optimiza para animaciones */
+  transform: translateZ(0); /* Fuerza aceleración por hardware */
+  backface-visibility: hidden; /* Previene glitches visuales */
+}
+
+/* Mejora la visualización en dispositivos móviles */
+@media screen and (max-width: 900px) {
+  .story-section {
+    min-height: calc(100vh - 80px); /* Ajusta para móviles */
+    margin: 40px 0; /* Aumenta margen para mejor separación */
+    scroll-margin-top: 40px; /* Mejora el comportamiento de scroll al navegar */
+  }
+}
+
+/* Asegura que los elementos de la sección sean siempre visibles */
+.text-block, .image-block {
+  will-change: opacity, transform; /* Optimiza para animaciones */
+  transform: translateZ(0); /* Fuerza aceleración por hardware */
+}
+
+/* Asegura que las secciones estén correctamente espaciadas */
+#section1, #section2, #section3, #section4 {
+  scroll-snap-align: start; /* Mejora la navegación por scroll */
+  scroll-margin-top: 40px; /* Ajusta el margen superior al hacer scroll */
+}
+
+/* Contenedor principal con scroll-snap */
+.story-container {
+  scroll-snap-type: y proximity; /* Mejora el comportamiento de scroll */
+  overflow-y: auto; /* Asegura el scroll */
+  height: 100vh; /* Altura completa */
+  scroll-behavior: smooth; /* Desplazamiento suave */
+}

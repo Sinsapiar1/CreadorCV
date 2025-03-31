@@ -27,6 +27,8 @@ const downloadPDFBtn = document.getElementById('download-pdf');
 const downloadDOCXBtn = document.getElementById('download-docx');
 
 // 1) Configuración inicial y animaciones
+// Reemplaza esta sección en tu script.js (aproximadamente líneas 45-87)
+
 document.addEventListener('DOMContentLoaded', function() {
   // Posición de inicio: opacity:0, fuera de pantalla para cada textBlock e imageBlock
   sections.forEach((section) => {
@@ -68,56 +70,58 @@ document.addEventListener('DOMContentLoaded', function() {
       );
   }
 
-  // Animación de las secciones siguientes con ScrollTrigger
+  // Animación de las secciones siguientes con ScrollTrigger - MODIFICADO
   sections.forEach((section, index) => {
     if (index > 0) {
-      gsap
-        .timeline({
-          scrollTrigger: {
-            trigger: section,
-            start: "top 60%",
-            end: "bottom 40%",
-            toggleActions: "play reverse play reverse"
-          }
-        })
-        .fromTo(
-          section,
-          { opacity: 0 },
-          {
-            opacity: 1,
-            duration: 0.5,
-            ease: "power2.out"
-          }
-        )
-        .fromTo(
-          section.querySelector(".text-block"),
-          { opacity: 0, y: 30 },
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.5,
-            ease: "power2.out"
-          },
-          "-=0.3"
-        )
-        .fromTo(
-          section.querySelector(".image-block"),
-          { opacity: 0, x: 30 },
-          {
-            opacity: 1,
-            x: 0,
-            duration: 0.5,
-            ease: "power2.out"
-          },
-          "-=0.3"
-        );
+      // Crear un timeline para esta sección
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: "top 80%", // Cambiar para que empiece a animar antes de llegar a la sección
+          end: "bottom 20%", // Cambiar para que termine después de pasar la sección
+          toggleActions: "play none none reverse", // Cambiar a "play none none reverse" para mantener visible
+          // markers: true, // Descomentar para depuración
+        }
+      });
+      
+      // Añadir animaciones al timeline
+      tl.fromTo(
+        section,
+        { opacity: 0 },
+        {
+          opacity: 1,
+          duration: 0.5,
+          ease: "power2.out"
+        }
+      )
+      .fromTo(
+        section.querySelector(".text-block"),
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out"
+        },
+        "-=0.3"
+      )
+      .fromTo(
+        section.querySelector(".image-block"),
+        { opacity: 0, x: 30 },
+        {
+          opacity: 1,
+          x: 0,
+          duration: 0.5,
+          ease: "power2.out"
+        },
+        "-=0.3"
+      );
     }
   });
 
   // Configuración inicial del tema
   applyTheme(0);
 });
-
 // 2) Gestión del desplazamiento global (para barra de progreso)
 window.addEventListener("scroll", () => {
   const docHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -252,7 +256,25 @@ cvTypeCards.forEach(card => {
   card.addEventListener('click', () => {
     selectedCVType = card.getAttribute('data-type');
     console.log(`Tipo de CV seleccionado: ${selectedCVType}`);
+    
+    // Navegar a la siguiente sección
     sections[1].scrollIntoView({ behavior: "smooth" });
+    
+    // Forzar la visibilidad después de un breve retraso
+    setTimeout(() => {
+      gsap.to(sections[1], { opacity: 1, duration: 0.3 });
+      gsap.to(sections[1].querySelector(".text-block"), { opacity: 1, y: 0, duration: 0.3 });
+      gsap.to(sections[1].querySelector(".image-block"), { opacity: 1, x: 0, duration: 0.3 });
+      
+      // Actualizar pasos activos
+      steps.forEach((step, i) => {
+        if (i <= 1) step.classList.add("active");
+        else step.classList.remove("active");
+      });
+      
+      // Actualizar tema
+      applyTheme(1);
+    }, 500);
   });
 });
 
@@ -338,50 +360,70 @@ function collectFormData() {
 // Reemplaza esta sección en el archivo script.js
 // Busca el evento del botón generateCVBtn y reemplázalo con este código
 
+// Reemplaza esta línea en tu archivo script.js:
+// generateCVBtn.addEventListener
+
+// Con este código completo:
 generateCVBtn.addEventListener('click', async () => {
-    // Recopilar datos del formulario
-    collectFormData();
+  // Recopilar datos del formulario
+  collectFormData();
+  
+  // Validación básica
+  if (!formData.name || !formData.email) {
+    alert('Por favor, completa al menos el nombre y email');
+    return;
+  }
+  
+  // Navegar a la sección de procesamiento IA
+  sections[2].scrollIntoView({ behavior: "smooth" });
+  
+  // Forzar la visibilidad después de un breve retraso
+  setTimeout(() => {
+    gsap.to(sections[2], { opacity: 1, duration: 0.3 });
+    gsap.to(sections[2].querySelector(".text-block"), { opacity: 1, y: 0, duration: 0.3 });
+    gsap.to(sections[2].querySelector(".image-block"), { opacity: 1, x: 0, duration: 0.3 });
     
-    // Validación básica
-    if (!formData.name || !formData.email) {
-      alert('Por favor, completa al menos el nombre y email');
-      return;
-    }
+    // Actualizar pasos activos
+    steps.forEach((step, i) => {
+      if (i <= 2) step.classList.add("active");
+      else step.classList.remove("active");
+    });
     
-    // Navegar a la sección de procesamiento IA
-    sections[2].scrollIntoView({ behavior: "smooth" });
+    // Actualizar tema
+    applyTheme(2);
+  }, 500);
+  
+  // Mostrar indicador de procesamiento
+  processingIndicator.classList.remove('hidden');
+  aiImprovements.classList.add('hidden');
+  previewBtn.classList.add('hidden');
+  
+  // Llamar a la API de Gemini
+  try {
+    // Crear un prompt adecuado basado en los datos del formulario y el tipo de CV
+    const prompt = crearPromptParaGemini(formData, selectedCVType);
     
-    // Mostrar indicador de procesamiento
-    processingIndicator.classList.remove('hidden');
-    aiImprovements.classList.add('hidden');
-    previewBtn.classList.add('hidden');
+    // Realizar la llamada a la API
+    const respuestaIA = await llamarGeminiAPI(prompt);
     
-    // Llamar a la API de Gemini
-    try {
-      // Crear un prompt adecuado basado en los datos del formulario y el tipo de CV
-      const prompt = crearPromptParaGemini(formData, selectedCVType);
-      
-      // Realizar la llamada a la API
-      const respuestaIA = await llamarGeminiAPI(prompt);
-      
-      // Procesar la respuesta
-      procesarRespuestaGemini(respuestaIA);
-      
-      // Mostrar los resultados
-      processingIndicator.classList.add('hidden');
-      aiImprovements.classList.remove('hidden');
-      previewBtn.classList.remove('hidden');
-      
-    } catch (error) {
-      console.error('Error al procesar con Gemini:', error);
-      
-      // Mostrar un mensaje de error al usuario
-      processingIndicator.classList.add('hidden');
-      document.getElementById('ai-summary').textContent = 
-        'Hubo un error al procesar tu CV. Por favor, intenta nuevamente.';
-      aiImprovements.classList.remove('hidden');
-    }
-  });
+    // Procesar la respuesta
+    procesarRespuestaGemini(respuestaIA);
+    
+    // Mostrar los resultados
+    processingIndicator.classList.add('hidden');
+    aiImprovements.classList.remove('hidden');
+    previewBtn.classList.remove('hidden');
+    
+  } catch (error) {
+    console.error('Error al procesar con Gemini:', error);
+    
+    // Mostrar un mensaje de error al usuario
+    processingIndicator.classList.add('hidden');
+    document.getElementById('ai-summary').textContent = 
+      'Hubo un error al procesar tu CV. Por favor, intenta nuevamente.';
+    aiImprovements.classList.remove('hidden');
+  }
+});
   
   // Función para crear el prompt adecuado para Gemini
  // Función mejorada para crear el prompt para Gemini
@@ -664,7 +706,7 @@ downloadPDFBtn.addEventListener('click', () => {
         unit: 'mm',
         format: 'a4'
       });
-      
+        
       // Configurar el estilo según la selección
       const style = getStyleConfig(selectedStyle);
       
@@ -1356,7 +1398,7 @@ downloadDOCXBtn.addEventListener('click', () => {
     try {
       // Obtener la configuración de estilo para DOCX
       const styleConfig = getDOCXStyleConfig(selectedStyle);
-      
+   
       // Array para almacenar todos los elementos del documento
       const documentElements = [];
       
@@ -2095,4 +2137,1396 @@ document.addEventListener('DOMContentLoaded', function() {
   if (defaultStyleCard) {
     defaultStyleCard.classList.add('selected');
   }
+});
+// Añade este código a tu archivo script.js
+
+// Crear el botón de toggle para modo oscuro/claro
+function createThemeToggle() {
+  const themeToggle = document.createElement('div');
+  themeToggle.className = 'theme-toggle';
+  themeToggle.innerHTML = '<i class="fa fa-moon-o"></i>';
+  document.body.appendChild(themeToggle);
+  
+  // Comprobar si hay preferencia guardada
+  const isDarkMode = localStorage.getItem('darkMode') === 'true';
+  if (isDarkMode) {
+    document.body.classList.add('dark-mode');
+    themeToggle.innerHTML = '<i class="fa fa-sun-o"></i>';
+  }
+  
+  // Añadir evento click
+  themeToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('darkMode', isDark);
+    
+    // Cambiar icono según el modo
+    themeToggle.innerHTML = isDark ? '<i class="fa fa-sun-o"></i>' : '<i class="fa fa-moon-o"></i>';
+    
+    // Animar cambio
+    document.querySelectorAll('.text-block, .cv-type-card, .cv-style-card').forEach(el => {
+      el.style.transition = 'all 0.8s ease';
+    });
+  });
+}
+
+// Llamar a la función cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+  createThemeToggle();
+  
+  // Mejorar interactividad de tarjetas
+  document.querySelectorAll('.cv-type-card, .cv-style-card').forEach(card => {
+    card.addEventListener('click', () => {
+      // Añadir una pequeña animación al hacer clic
+      card.classList.add('animate-click');
+      setTimeout(() => {
+        card.classList.remove('animate-click');
+      }, 300);
+    });
+  });
+  
+  // Añadir animación al botón "next"
+  document.querySelectorAll('.next-section-btn').forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transform = 'translateY(-3px)';
+      btn.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.15)';
+    });
+    
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = '';
+      btn.style.boxShadow = '';
+    });
+  });
+});
+
+// Añadir detectores de entrada para animar formularios
+function setupFormAnimations() {
+  const formInputs = document.querySelectorAll('input, textarea');
+  
+  formInputs.forEach(input => {
+    // Efecto al enfocar
+    input.addEventListener('focus', () => {
+      input.style.transform = 'scale(1.01)';
+      input.style.boxShadow = '0 0 0 2px rgba(243, 156, 18, 0.3)';
+      input.style.transition = 'all 0.3s ease';
+    });
+    
+    // Restablecer al perder el foco
+    input.addEventListener('blur', () => {
+      input.style.transform = '';
+      input.style.boxShadow = '';
+    });
+  });
+}
+
+// Inicializar animaciones después de que la página esté cargada
+window.addEventListener('load', () => {
+  setupFormAnimations();
+});
+// Añade estas funciones a tu archivo script.js
+
+// Función para guardar datos automáticamente
+function autoSaveFormData() {
+  let timeoutId;
+  
+  // Detectar cambios en todos los inputs
+  document.addEventListener('input', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+      // Limpiar el timeout previo
+      clearTimeout(timeoutId);
+      
+      // Establecer un nuevo timeout para guardar después de dejar de escribir
+      timeoutId = setTimeout(() => {
+        const formData = collectFormData();
+        localStorage.setItem('cvFormData', JSON.stringify(formData));
+        localStorage.setItem('selectedCVType', selectedCVType);
+        localStorage.setItem('selectedStyle', selectedStyle);
+        
+        // Mostrar indicador de guardado
+        showSaveIndicator();
+      }, 1000);
+    }
+  });
+}
+
+// Función para mostrar indicador de guardado
+function showSaveIndicator() {
+  // Crear el indicador si no existe
+  let saveIndicator = document.getElementById('save-indicator');
+  
+  if (!saveIndicator) {
+    saveIndicator = document.createElement('div');
+    saveIndicator.id = 'save-indicator';
+    saveIndicator.style.position = 'fixed';
+    saveIndicator.style.bottom = '20px';
+    saveIndicator.style.right = '20px';
+    saveIndicator.style.background = 'rgba(0, 0, 0, 0.7)';
+    saveIndicator.style.color = 'white';
+    saveIndicator.style.padding = '10px 15px';
+    saveIndicator.style.borderRadius = '5px';
+    saveIndicator.style.fontSize = '14px';
+    saveIndicator.style.zIndex = '1000';
+    saveIndicator.style.transition = 'opacity 0.5s ease';
+    document.body.appendChild(saveIndicator);
+  }
+  
+  // Mostrar mensaje
+  saveIndicator.textContent = 'Guardado automático ✓';
+  saveIndicator.style.opacity = '1';
+  
+  // Ocultar después de 2 segundos
+  setTimeout(() => {
+    saveIndicator.style.opacity = '0';
+  }, 2000);
+}
+
+// Función para cargar datos guardados
+function loadSavedFormData() {
+  const savedData = localStorage.getItem('cvFormData');
+  const savedCVType = localStorage.getItem('selectedCVType');
+  const savedStyle = localStorage.getItem('selectedStyle');
+  
+  if (savedData) {
+    // Crear banner de recuperación
+    const recoveryBanner = document.createElement('div');
+    recoveryBanner.className = 'recovery-banner';
+    recoveryBanner.innerHTML = `
+      <div class="recovery-message">
+        <i class="fa fa-history"></i> Se encontró un borrador guardado. ¿Deseas restaurarlo?
+      </div>
+      <div class="recovery-buttons">
+        <button id="restore-btn">Restaurar</button>
+        <button id="discard-btn">Descartar</button>
+      </div>
+    `;
+    
+    recoveryBanner.style.position = 'fixed';
+    recoveryBanner.style.top = '0';
+    recoveryBanner.style.left = '0';
+    recoveryBanner.style.width = '100%';
+    recoveryBanner.style.padding = '15px';
+    recoveryBanner.style.background = '#3498db';
+    recoveryBanner.style.color = 'white';
+    recoveryBanner.style.zIndex = '2000';
+    recoveryBanner.style.display = 'flex';
+    recoveryBanner.style.justifyContent = 'space-between';
+    recoveryBanner.style.alignItems = 'center';
+    
+    document.body.insertBefore(recoveryBanner, document.body.firstChild);
+    
+    // Añadir eventos a los botones
+    document.getElementById('restore-btn').addEventListener('click', () => {
+      // Restaurar datos
+      formData = JSON.parse(savedData);
+      
+      if (savedCVType) {
+        selectedCVType = savedCVType;
+        document.querySelectorAll('.cv-type-card').forEach(card => {
+          if (card.getAttribute('data-type') === savedCVType) {
+            card.classList.add('selected');
+          }
+        });
+      }
+      
+      if (savedStyle) {
+        selectedStyle = savedStyle;
+        document.querySelectorAll('.cv-style-card').forEach(card => {
+          if (card.getAttribute('data-style') === savedStyle) {
+            card.classList.add('selected');
+          }
+        });
+      }
+      
+      // Llenar el formulario con los datos guardados
+      fillFormWithData(formData);
+      
+      // Eliminar el banner
+      document.body.removeChild(recoveryBanner);
+      
+      // Mostrar mensaje de éxito
+      const successMessage = document.createElement('div');
+      successMessage.textContent = 'Datos restaurados correctamente';
+      successMessage.style.position = 'fixed';
+      successMessage.style.bottom = '20px';
+      successMessage.style.right = '20px';
+      successMessage.style.background = '#2ecc71';
+      successMessage.style.color = 'white';
+      successMessage.style.padding = '10px 15px';
+      successMessage.style.borderRadius = '5px';
+      successMessage.style.zIndex = '1000';
+      document.body.appendChild(successMessage);
+      
+      setTimeout(() => {
+        document.body.removeChild(successMessage);
+      }, 3000);
+    });
+    
+    document.getElementById('discard-btn').addEventListener('click', () => {
+      // Eliminar datos guardados
+      localStorage.removeItem('cvFormData');
+      localStorage.removeItem('selectedCVType');
+      localStorage.removeItem('selectedStyle');
+      
+      // Eliminar el banner
+      document.body.removeChild(recoveryBanner);
+    });
+  }
+}
+
+// Función para llenar el formulario con datos guardados
+function fillFormWithData(data) {
+  // Rellenar campos básicos
+  document.querySelector('input[name="name"]').value = data.name || '';
+  document.querySelector('input[name="email"]').value = data.email || '';
+  document.querySelector('input[name="phone"]').value = data.phone || '';
+  
+  // Rellenar educación
+  const educationContainer = document.getElementById('education-container');
+  educationContainer.innerHTML = ''; // Limpiar contenedor
+  
+  if (data.education && data.education.length > 0) {
+    data.education.forEach(edu => {
+      const newEntry = document.createElement('div');
+      newEntry.classList.add('form-subgroup', 'education-entry');
+      newEntry.innerHTML = `
+        <input type="text" name="institution" value="${edu.institution || ''}" placeholder="Nombre de la Institución">
+        <input type="text" name="degree" value="${edu.degree || ''}" placeholder="Título/Certificado">
+        <input type="text" name="year" value="${edu.year || ''}" placeholder="Año">
+        <button type="button" class="remove-btn">Eliminar</button>
+      `;
+      educationContainer.appendChild(newEntry);
+      
+      // Añadir funcionalidad al botón de eliminar
+      const removeBtn = newEntry.querySelector('.remove-btn');
+      removeBtn.addEventListener('click', () => {
+        educationContainer.removeChild(newEntry);
+      });
+    });
+  } else {
+    // Añadir al menos una entrada vacía
+    addEducationEntry();
+  }
+  
+  // Rellenar experiencia
+  const experienceContainer = document.getElementById('experience-container');
+  experienceContainer.innerHTML = ''; // Limpiar contenedor
+  
+  if (data.experience && data.experience.length > 0) {
+    data.experience.forEach(exp => {
+      const newEntry = document.createElement('div');
+      newEntry.classList.add('form-subgroup', 'experience-entry');
+      newEntry.innerHTML = `
+        <input type="text" name="company" value="${exp.company || ''}" placeholder="Empresa">
+        <input type="text" name="position" value="${exp.position || ''}" placeholder="Puesto">
+        <input type="text" name="duration" value="${exp.duration || ''}" placeholder="Duración (ej. 2019-2022)">
+        <textarea name="description" placeholder="Descripción del trabajo" rows="3">${exp.description || ''}</textarea>
+        <button type="button" class="remove-btn">Eliminar</button>
+      `;
+      experienceContainer.appendChild(newEntry);
+      
+      // Añadir funcionalidad al botón de eliminar
+      const removeBtn = newEntry.querySelector('.remove-btn');
+      removeBtn.addEventListener('click', () => {
+        experienceContainer.removeChild(newEntry);
+      });
+    });
+  } else {
+    // Añadir al menos una entrada vacía
+    addExperienceEntry();
+  }
+  
+  // Rellenar habilidades
+  if (data.skills && data.skills.length > 0) {
+    document.querySelector('textarea[name="skills"]').value = data.skills.join(', ');
+  }
+}
+
+// Función helper para añadir una entrada de educación vacía
+function addEducationEntry() {
+  const educationContainer = document.getElementById('education-container');
+  const newEntry = document.createElement('div');
+  newEntry.classList.add('form-subgroup', 'education-entry');
+  newEntry.innerHTML = `
+    <input type="text" name="institution" placeholder="Nombre de la Institución">
+    <input type="text" name="degree" placeholder="Título/Certificado">
+    <input type="text" name="year" placeholder="Año">
+    <button type="button" class="remove-btn">Eliminar</button>
+  `;
+  educationContainer.appendChild(newEntry);
+  
+  // Añadir funcionalidad al botón de eliminar
+  const removeBtn = newEntry.querySelector('.remove-btn');
+  removeBtn.addEventListener('click', () => {
+    educationContainer.removeChild(newEntry);
+  });
+  
+  return newEntry;
+}
+
+// Función helper para añadir una entrada de experiencia vacía
+function addExperienceEntry() {
+  const experienceContainer = document.getElementById('experience-container');
+  const newEntry = document.createElement('div');
+  newEntry.classList.add('form-subgroup', 'experience-entry');
+  newEntry.innerHTML = `
+    <input type="text" name="company" placeholder="Empresa">
+    <input type="text" name="position" placeholder="Puesto">
+    <input type="text" name="duration" placeholder="Duración (ej. 2019-2022)">
+    <textarea name="description" placeholder="Descripción del trabajo" rows="3"></textarea>
+    <button type="button" class="remove-btn">Eliminar</button>
+  `;
+  experienceContainer.appendChild(newEntry);
+  
+  // Añadir funcionalidad al botón de eliminar
+  const removeBtn = newEntry.querySelector('.remove-btn');
+  removeBtn.addEventListener('click', () => {
+    experienceContainer.removeChild(newEntry);
+  });
+  
+  return newEntry;
+}
+
+// Inicializar funciones de guardado cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+  loadSavedFormData();
+  autoSaveFormData();
+});
+// Añade esta función a tu script.js
+
+// Crear botones de compartir
+function addSharingButtons() {
+  // Verificar si los botones ya existen para evitar duplicación
+  const existingSharing = document.querySelector('.sharing-options');
+  if (existingSharing) {
+    return; // Si ya existen, no hacer nada
+  }
+  
+  // Crear contenedor para botones de compartir
+  const sharingContainer = document.createElement('div');
+  sharingContainer.className = 'sharing-options';
+  sharingContainer.innerHTML = `
+    <h3>Compartir tu CV</h3>
+    <div class="sharing-buttons">
+      <button class="share-btn linkedin" title="Compartir en LinkedIn">
+        <i class="fa fa-linkedin"></i> LinkedIn
+      </button>
+      <button class="share-btn email" title="Compartir por email">
+        <i class="fa fa-envelope"></i> Email
+      </button>
+      <button class="share-btn copy-link" title="Copiar enlace">
+        <i class="fa fa-link"></i> Copiar Enlace
+      </button>
+    </div>
+  `;
+  
+  // Estilos para contenedor
+  sharingContainer.style.margin = '20px 0';
+  sharingContainer.style.padding = '15px';
+  sharingContainer.style.background = 'rgba(255, 255, 255, 0.1)';
+  sharingContainer.style.borderRadius = '10px';
+  
+  // Estilos para botones
+  const buttonsContainer = sharingContainer.querySelector('.sharing-buttons');
+  buttonsContainer.style.display = 'flex';
+  buttonsContainer.style.gap = '10px';
+  buttonsContainer.style.marginTop = '10px';
+  
+  // Estilo común para botones de compartir
+  const shareButtons = sharingContainer.querySelectorAll('.share-btn');
+  shareButtons.forEach(btn => {
+    btn.style.padding = '8px 15px';
+    btn.style.borderRadius = '5px';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.cursor = 'pointer';
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.gap = '5px';
+    btn.style.transition = 'all 0.3s ease';
+  });
+  
+  // Colores específicos para cada botón
+  sharingContainer.querySelector('.linkedin').style.backgroundColor = '#0077b5';
+  sharingContainer.querySelector('.email').style.backgroundColor = '#ea4335';
+  sharingContainer.querySelector('.copy-link').style.backgroundColor = '#333';
+  
+  // Añadir efectos hover
+  shareButtons.forEach(btn => {
+    btn.addEventListener('mouseenter', () => {
+      btn.style.transform = 'translateY(-3px)';
+      btn.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.2)';
+    });
+    
+    btn.addEventListener('mouseleave', () => {
+      btn.style.transform = '';
+      btn.style.boxShadow = '';
+    });
+  });
+  
+  // Añadir al documento en la sección de previsualización
+  const previewSection = document.getElementById('section4');
+  if (previewSection) {
+    const textBlock = previewSection.querySelector('.text-block');
+    textBlock.appendChild(sharingContainer);
+    
+    // Añadir funcionalidad a los botones
+    setupSharingFunctionality(sharingContainer);
+  }
+}
+
+// Configurar la funcionalidad de compartir
+function setupSharingFunctionality(container) {
+  // LinkedIn
+  container.querySelector('.linkedin').addEventListener('click', () => {
+    // Crear URL para compartir en LinkedIn
+    const text = encodeURIComponent(`Mira mi CV profesional creado con IA: ${formData.name}`);
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${window.location.href}&summary=${text}`;
+    window.open(url, '_blank');
+  });
+  
+  // Email
+  container.querySelector('.email').addEventListener('click', () => {
+    const subject = encodeURIComponent(`CV de ${formData.name}`);
+    const body = encodeURIComponent(`Hola,\n\nQuería compartir mi currículum creado con ayuda de IA. Puedes verlo en el siguiente enlace:\n\n${window.location.href}\n\nSaludos,\n${formData.name}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  });
+  
+  // Copiar enlace
+  container.querySelector('.copy-link').addEventListener('click', () => {
+    // Crear un enlace temporal con los datos
+    const tempData = {
+      formData: formData,
+      cvType: selectedCVType,
+      style: selectedStyle
+    };
+    
+    // En una aplicación real, esto generaría un enlace único o una ID para compartir
+    // Para esta demo, simplemente copiamos la URL actual
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => {
+        // Mostrar confirmación
+        const btn = container.querySelector('.copy-link');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa fa-check"></i> ¡Copiado!';
+        btn.style.backgroundColor = '#2ecc71';
+        
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.backgroundColor = '#333';
+        }, 2000);
+      })
+      .catch(err => {
+        console.error('Error al copiar enlace:', err);
+      });
+  });
+}
+
+// Crear función para exportar a HTML
+function addExportToHTMLButton() {
+  const downloadOptions = document.querySelector('.download-options .download-buttons');
+  
+  // Verificar si el botón ya existe para evitar duplicación
+  if (downloadOptions && !downloadOptions.querySelector('.html')) {
+    const htmlButton = document.createElement('button');
+    htmlButton.className = 'download-btn html';
+    htmlButton.textContent = 'Exportar HTML';
+    htmlButton.style.backgroundColor = '#2980b9';
+    
+    downloadOptions.appendChild(htmlButton);
+    
+    // Añadir funcionalidad para exportar a HTML
+    htmlButton.addEventListener('click', exportToHTML);
+  }
+}
+
+// Modifica previewBtn para que limpie los botones anteriores si es necesario
+previewBtn.addEventListener('click', () => {
+  // Navegar a la sección de previsualización
+  sections[3].scrollIntoView({ behavior: "smooth" });
+  
+  // Llenar la vista previa con los datos
+  document.getElementById('preview-name').textContent = formData.name;
+  document.getElementById('preview-email').textContent = formData.email;
+  document.getElementById('preview-phone').textContent = formData.phone;
+  document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
+  
+  // Experiencia
+  const experienceContainer = document.getElementById('preview-experience');
+  experienceContainer.innerHTML = '';
+  formData.experience.forEach(exp => {
+    const expItem = document.createElement('div');
+    expItem.classList.add('experience-item');
+    expItem.innerHTML = `
+      <div class="exp-header">
+        <h5>${exp.position}</h5>
+        <p>${exp.company} | ${exp.duration}</p>
+      </div>
+      <p>${exp.description}</p>
+    `;
+    experienceContainer.appendChild(expItem);
+  });
+  
+  // Educación
+  const educationContainer = document.getElementById('preview-education');
+  educationContainer.innerHTML = '';
+  formData.education.forEach(edu => {
+    const eduItem = document.createElement('div');
+    eduItem.classList.add('education-item');
+    eduItem.innerHTML = `
+      <h5>${edu.degree}</h5>
+      <p>${edu.institution} | ${edu.year}</p>
+    `;
+    educationContainer.appendChild(eduItem);
+  });
+  
+  // Habilidades
+  const skillsContainer = document.getElementById('preview-skills');
+  skillsContainer.innerHTML = '';
+  formData.skills.forEach(skill => {
+    const skillTag = document.createElement('span');
+    skillTag.classList.add('skill-tag');
+    skillTag.textContent = skill;
+    skillsContainer.appendChild(skillTag);
+  });
+  
+  // Esperar a que se cargue la vista previa antes de añadir los botones
+  setTimeout(() => {
+    // Agregar botones de compartir y exportar HTML
+    addSharingButtons();
+    addExportToHTMLButton();
+  }, 500);
+});
+
+
+// Añade estas funciones a tu script.js para implementar mejoras de IA
+
+// 1. Implementación de sistema de palabras clave por sector
+const keywordsBySector = {
+  tecnologia: [
+    "desarrollo", "programación", "software", "aplicaciones", "web", "móvil", 
+    "cloud", "datos", "seguridad", "redes", "sistemas", "arquitectura", 
+    "frontend", "backend", "fullstack", "devops", "agile", "scrum", 
+    "JavaScript", "Python", "Java", "C#", "React", "Angular", "Node.js", 
+    "AWS", "Azure", "Docker", "Kubernetes", "CI/CD", "GitHub", "GitLab"
+  ],
+  negocios: [
+    "estrategia", "gestión", "liderazgo", "negociación", "ventas", "marketing", 
+    "finanzas", "contabilidad", "presupuesto", "análisis", "planificación", 
+    "KPI", "objetivos", "resultados", "cliente", "proveedor", "mercado", 
+    "competencia", "rentabilidad", "crecimiento", "innovación", "dirección", 
+    "proyecto", "equipo", "coordinación", "optimización", "eficiencia"
+  ],
+  creatividad: [
+    "diseño", "creativo", "concepto", "estética", "visual", "gráfico", 
+    "editorial", "multimedia", "UX", "UI", "usabilidad", "experiencia", 
+    "comunicación", "marca", "identidad", "color", "tipografía", "composición", 
+    "ilustración", "fotografía", "vídeo", "animación", "storytelling", 
+    "contenido", "copywriting", "edición", "producción", "dirección de arte"
+  ],
+  salud: [
+    "asistencia", "cuidado", "paciente", "diagnóstico", "tratamiento", 
+    "clínico", "terapéutico", "rehabilitación", "prevención", "medicamento", 
+    "farmacología", "sanitario", "bienestar", "salud", "patología", 
+    "enfermedad", "recuperación", "historia clínica", "seguimiento", 
+    "protocolo", "análisis", "laboratorio", "radiología", "especialidad"
+  ]
+};
+
+// 2. Función para analizar el texto en busca de palabras clave
+function analyzeKeywords(text, sector) {
+  if (!sector || !keywordsBySector[sector]) return { score: 0, missing: [] };
+  
+  const relevantKeywords = keywordsBySector[sector];
+  const textLower = text.toLowerCase();
+  
+  // Palabras clave encontradas
+  const found = relevantKeywords.filter(keyword => 
+    textLower.includes(keyword.toLowerCase())
+  );
+  
+  // Palabras clave faltantes (máximo 5 sugerencias)
+  const missing = relevantKeywords
+    .filter(keyword => !textLower.includes(keyword.toLowerCase()))
+    .sort(() => 0.5 - Math.random()) // Mezclar aleatoriamente
+    .slice(0, 5);
+  
+  // Calcular puntuación (0-100)
+  const score = Math.min(100, Math.round((found.length / relevantKeywords.length) * 100));
+  
+  return { score, found, missing };
+}
+
+// 3. Función para proporcionar retroalimentación en tiempo real
+function setupRealtimeFeedback() {
+  // Monitorear los campos de texto principales
+  const textareas = document.querySelectorAll('textarea[name="description"], textarea[name="skills"]');
+  
+  textareas.forEach(textarea => {
+    // Crear contenedor para retroalimentación
+    const feedbackContainer = document.createElement('div');
+    feedbackContainer.className = 'ai-feedback';
+    feedbackContainer.style.marginTop = '10px';
+    feedbackContainer.style.padding = '10px';
+    feedbackContainer.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+    feedbackContainer.style.borderRadius = '5px';
+    feedbackContainer.style.display = 'none';
+    
+    // Insertar después del textarea
+    textarea.parentNode.insertBefore(feedbackContainer, textarea.nextSibling);
+    
+    // Monitorear cambios con un temporizador para evitar demasiadas actualizaciones
+    let typingTimer;
+    textarea.addEventListener('input', () => {
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        // Analizar el texto según el sector seleccionado
+        const analysis = analyzeKeywords(textarea.value, selectedCVType);
+        
+        // Si hay palabras clave específicas del sector, mostrar retroalimentación
+        if (analysis.score > 0 || analysis.missing.length > 0) {
+          feedbackContainer.style.display = 'block';
+          
+          // Crear contenido de retroalimentación
+          let feedbackContent = '';
+          
+          // Mostrar puntuación
+          feedbackContent += `<div class="keyword-score">
+            <span class="score-label">Relevancia para el sector: </span>
+            <span class="score-value ${analysis.score < 40 ? 'low' : analysis.score < 70 ? 'medium' : 'high'}">
+              ${analysis.score}%
+            </span>
+          </div>`;
+          
+          // Sugerencias de palabras clave
+          if (analysis.missing.length > 0) {
+            feedbackContent += `<div class="keyword-suggestions">
+              <span class="suggestions-label">Considera incluir alguna de estas palabras clave: </span>
+              <div class="suggested-keywords">
+                ${analysis.missing.map(kw => `<span class="keyword">${kw}</span>`).join('')}
+              </div>
+            </div>`;
+          }
+          
+          feedbackContainer.innerHTML = feedbackContent;
+          
+          // Añadir estilos para el contenido
+          const style = document.createElement('style');
+          style.textContent = `
+            .keyword-score { margin-bottom: 10px; }
+            .score-value { font-weight: bold; }
+            .score-value.low { color: #e74c3c; }
+            .score-value.medium { color: #f39c12; }
+            .score-value.high { color: #2ecc71; }
+            .keyword-suggestions { margin-top: 5px; }
+            .suggested-keywords { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 5px; }
+            .keyword { 
+              background-color: rgba(52, 152, 219, 0.2); 
+              padding: 3px 8px; 
+              border-radius: 12px; 
+              font-size: 12px;
+              cursor: pointer;
+            }
+            .keyword:hover {
+              background-color: rgba(52, 152, 219, 0.4);
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // Añadir funcionalidad para insertar palabras clave al hacer clic
+          feedbackContainer.querySelectorAll('.keyword').forEach(keywordEl => {
+            keywordEl.addEventListener('click', () => {
+              // Insertar la palabra clave en el texto actual
+              textarea.value += (textarea.value.endsWith(' ') || textarea.value === '' ? '' : ' ') + 
+                                keywordEl.textContent + ' ';
+              
+              // Disparar evento input para actualizar el análisis
+              textarea.dispatchEvent(new Event('input'));
+              
+              // Enfocar el textarea
+              textarea.focus();
+            });
+          });
+        } else {
+          feedbackContainer.style.display = 'none';
+        }
+      }, 500);
+    });
+  });
+}
+
+// 4. Función para añadir corrector gramatical básico
+function setupGrammarChecker() {
+  const textareas = document.querySelectorAll('textarea');
+  
+  // Lista básica de errores comunes
+  const commonErrors = [
+    { pattern: /\b([mst]e) ([aeiou])/gi, replacement: "$1 $2" }, // me e → me he
+    { pattern: /\ba\s+([aeiouáéíóú])/gi, replacement: "a $1" }, // a el → al
+    { pattern: /\bde\s+el\b/gi, replacement: "del" }, // de el → del
+    { pattern: /[\.,;:]\s*[\.,;:]+/g, replacement: "." }, // doble puntuación
+    { pattern: /\b[A-Za-zÁÉÍÓÚáéíóúÑñ]+\s+\s+[A-Za-zÁÉÍÓÚáéíóúÑñ]+\b/g, replacement: match => match.replace(/\s+/g, ' ') }, // espacios dobles
+    { pattern: /\b[A-Za-zÁÉÍÓÚáéíóúÑñ]+,,+[A-Za-zÁÉÍÓÚáéíóúÑñ]+\b/g, replacement: match => match.replace(/,,+/g, ',') }, // comas dobles
+    { pattern: /\s+\./g, replacement: "." }, // espacio antes del punto
+    { pattern: /\s+,/g, replacement: "," }, // espacio antes de la coma
+  ];
+  
+  textareas.forEach(textarea => {
+    // Crear contenedor para las correcciones
+    const correctionsContainer = document.createElement('div');
+    correctionsContainer.className = 'grammar-corrections';
+    correctionsContainer.style.marginTop = '10px';
+    correctionsContainer.style.display = 'none';
+    
+    // Insertar después del textarea
+    textarea.parentNode.insertBefore(correctionsContainer, textarea.nextSibling);
+    
+    // Monitorear cambios
+    let grammarTimer;
+    textarea.addEventListener('input', () => {
+      clearTimeout(grammarTimer);
+      grammarTimer = setTimeout(() => {
+        // Buscar errores
+        let text = textarea.value;
+        let hasCorrections = false;
+        let corrections = [];
+        
+        commonErrors.forEach(({ pattern, replacement }) => {
+          // Buscar coincidencias
+          let match;
+          while ((match = pattern.exec(text)) !== null) {
+            // Reemplazar
+            const corrected = match[0].replace(pattern, replacement);
+            
+            // Si hay un cambio, añadirlo a la lista de correcciones
+            if (corrected !== match[0]) {
+              hasCorrections = true;
+              corrections.push({
+                original: match[0],
+                corrected: corrected,
+                index: match.index
+              });
+            }
+          }
+        });
+        
+        // Mostrar correcciones si las hay
+        if (hasCorrections) {
+          correctionsContainer.style.display = 'block';
+          correctionsContainer.innerHTML = `
+            <div class="grammar-heading">
+              <i class="fa fa-check-circle"></i> Sugerencias gramaticales:
+            </div>
+            <ul class="corrections-list">
+              ${corrections.map(correction => `
+                <li class="correction-item">
+                  <span class="original">"${correction.original}"</span> →
+                  <span class="corrected">"${correction.corrected}"</span>
+                  <button class="apply-correction" data-original="${correction.original}" data-corrected="${correction.corrected}">
+                    Aplicar
+                  </button>
+                </li>
+              `).join('')}
+            </ul>
+          `;
+          
+          // Estilos para las correcciones
+          correctionsContainer.style.backgroundColor = 'rgba(46, 204, 113, 0.1)';
+          correctionsContainer.style.padding = '10px';
+          correctionsContainer.style.borderRadius = '5px';
+          
+          const style = document.createElement('style');
+          style.textContent = `
+            .grammar-heading { 
+              font-weight: bold; 
+              margin-bottom: 10px; 
+              color: #2ecc71;
+            }
+            .corrections-list { 
+              list-style: none; 
+              padding: 0; 
+              margin: 0; 
+            }
+            .correction-item { 
+              margin-bottom: 5px; 
+              display: flex; 
+              align-items: center;
+              gap: 10px;
+            }
+            .original { 
+              color: #e74c3c; 
+              text-decoration: line-through; 
+            }
+            .corrected { 
+              color: #2ecc71; 
+              font-weight: bold; 
+            }
+            .apply-correction {
+              background-color: #2ecc71;
+              color: white;
+              border: none;
+              border-radius: 3px;
+              padding: 2px 5px;
+              font-size: 12px;
+              cursor: pointer;
+              margin-left: auto;
+            }
+            .apply-correction:hover {
+              background-color: #27ae60;
+            }
+          `;
+          document.head.appendChild(style);
+          
+          // Añadir funcionalidad a los botones de aplicar
+          correctionsContainer.querySelectorAll('.apply-correction').forEach(button => {
+            button.addEventListener('click', () => {
+              const original = button.getAttribute('data-original');
+              const corrected = button.getAttribute('data-corrected');
+              
+              // Reemplazar en el texto
+              textarea.value = textarea.value.replace(original, corrected);
+              
+              // Disparar evento input para actualizar
+              textarea.dispatchEvent(new Event('input'));
+            });
+          });
+        } else {
+          correctionsContainer.style.display = 'none';
+        }
+      }, 1000); // Verificar después de 1 segundo de inactividad
+    });
+  });
+}
+
+// 5. Función para añadir adaptación a ofertas de trabajo
+function setupJobOfferAdaptation() {
+  // Crear contenedor principal
+  const adaptContainer = document.createElement('div');
+  adaptContainer.className = 'job-adapt-container';
+  adaptContainer.innerHTML = `
+    <h3>Adaptar CV a Oferta de Trabajo</h3>
+    <p>Pega aquí el texto de una oferta de trabajo para adaptar tu CV automáticamente:</p>
+    <textarea id="job-offer-text" rows="5" placeholder="Pega aquí el texto de la oferta..."></textarea>
+    <button id="analyze-job-btn" class="next-section-btn" style="margin-top: 10px;">
+      <i class="fa fa-magic"></i> Analizar y Adaptar
+    </button>
+    <div id="job-analysis-result" style="display: none;"></div>
+  `;
+  
+  // Estilizar el contenedor
+  adaptContainer.style.padding = '20px';
+  adaptContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+  adaptContainer.style.borderRadius = '15px';
+  adaptContainer.style.marginTop = '30px';
+  adaptContainer.style.marginBottom = '30px';
+  
+  // Añadir al formulario (al final)
+  const formSection = document.getElementById('section2');
+  if (formSection) {
+    const textBlock = formSection.querySelector('.text-block');
+    textBlock.appendChild(adaptContainer);
+    
+    // Configurar eventos
+    setupJobOfferAnalysis();
+  }
+}
+
+// Función para configurar el análisis de ofertas de trabajo
+function setupJobOfferAnalysis() {
+  const analyzeBtn = document.getElementById('analyze-job-btn');
+  const jobTextarea = document.getElementById('job-offer-text');
+  const resultsContainer = document.getElementById('job-analysis-result');
+  
+  if (analyzeBtn && jobTextarea && resultsContainer) {
+    analyzeBtn.addEventListener('click', () => {
+      const jobText = jobTextarea.value.trim();
+      
+      if (jobText.length < 50) {
+        alert('Por favor, introduce un texto de oferta de trabajo más detallado para analizarlo correctamente.');
+        return;
+      }
+      
+      // Mostrar indicador de carga
+      resultsContainer.innerHTML = `
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Analizando oferta de trabajo...</p>
+        </div>
+      `;
+      resultsContainer.style.display = 'block';
+      
+      // Simular procesamiento (en una aplicación real, aquí llamarías a la API de IA)
+      setTimeout(() => {
+        // Extraer palabras clave del texto de la oferta
+        const jobKeywords = extractKeywords(jobText);
+        
+        // Generar recomendaciones
+        const recommendations = generateRecommendations(jobKeywords);
+        
+        // Mostrar resultados
+        resultsContainer.innerHTML = `
+          <div class="job-analysis">
+            <h4>Análisis Completado</h4>
+            <div class="job-keywords">
+              <p><strong>Palabras clave detectadas:</strong></p>
+              <div class="keyword-tags">
+                ${jobKeywords.map(kw => `<span class="keyword-tag">${kw}</span>`).join('')}
+              </div>
+            </div>
+            <div class="recommendations">
+              <p><strong>Recomendaciones para optimizar tu CV:</strong></p>
+              <ul class="recommendations-list">
+                ${recommendations.map(rec => `
+                  <li class="recommendation-item">
+                    <p>${rec.text}</p>
+                    ${rec.action ? `<button class="apply-recommendation" data-action="${rec.action}" data-target="${rec.target}" data-content="${rec.content}">Aplicar</button>` : ''}
+                  </li>
+                `).join('')}
+              </ul>
+            </div>
+          </div>
+        `;
+        
+        // Añadir estilos
+        const style = document.createElement('style');
+        style.textContent = `
+          .job-analysis {
+            margin-top: 20px;
+          }
+          .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+          }
+          .keyword-tag {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #2980b9;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 13px;
+          }
+          .recommendations-list {
+            margin-top: 10px;
+            padding-left: 20px;
+          }
+          .recommendation-item {
+            margin-bottom: 15px;
+            position: relative;
+          }
+          .apply-recommendation {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 5px;
+          }
+          .apply-recommendation:hover {
+            background-color: #2980b9;
+          }
+          .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+          }
+        `;
+        document.head.appendChild(style);
+        
+        // Configurar eventos para los botones de recomendación
+        const applyButtons = document.querySelectorAll('.apply-recommendation');
+        applyButtons.forEach(button => {
+          button.addEventListener('click', () => {
+            const action = button.getAttribute('data-action');
+            const target = button.getAttribute('data-target');
+            const content = button.getAttribute('data-content');
+            
+            // Aplicar la recomendación
+            applyRecommendation(action, target, content);
+            
+            // Actualizar botón
+            button.textContent = '✓ Aplicado';
+            button.disabled = true;
+            button.style.backgroundColor = '#2ecc71';
+          });
+        });
+      }, 2000); // Simular 2 segundos de procesamiento
+    });
+  }
+}
+
+// Función para extraer palabras clave de una oferta de trabajo
+function extractKeywords(jobText) {
+  // En una aplicación real, esto utilizaría NLP o la API de IA
+  // Aquí simulamos un análisis básico
+  
+  // Normalizar el texto
+  const text = jobText.toLowerCase();
+  
+  // Palabras clave relevantes para CVs (simuladas)
+  const allKeywords = [
+    "experiencia", "años", "conocimientos", "habilidades", "competencias",
+    "requisitos", "formación", "estudios", "grado", "licenciatura", "máster",
+    "técnico", "especialista", "desarrollador", "analista", "gerente", "líder",
+    "coordinador", "gestión", "dirección", "proyecto", "equipo", "cliente",
+    "producto", "servicio", "ventas", "marketing", "diseño", "programación",
+    "software", "hardware", "datos", "análisis", "comunicación", "creativo",
+    "innovador", "proactivo", "organizado", "responsable", "autónomo",
+    "trabajar en equipo", "bajo presión", "objetivos", "resultados", "orientado a",
+    "microsoft", "office", "excel", "word", "powerpoint", "outlook", 
+    "python", "java", "javascript", "html", "css", "react", "angular", "node",
+    "sql", "nosql", "mongodb", "aws", "azure", "cloud", "docker", "kubernetes",
+    "agile", "scrum", "kanban", "jira", "confluence", "git", "github", "gitlab",
+    "inglés", "francés", "alemán", "idiomas", "b2", "c1", "nivel alto",
+    "responsabilidades", "funciones", "tareas", "ofrecemos", "beneficios",
+    "salario", "remuneración", "contrato", "jornada", "remoto", "presencial", "híbrido"
+  ];
+  
+  // Encontrar coincidencias
+  const foundKeywords = allKeywords.filter(keyword => 
+    text.includes(keyword) || text.includes(keyword.replace(" ", ""))
+  );
+  
+  // Limitar a máximo 10 palabras clave
+  return foundKeywords.slice(0, 10);
+}
+
+// Función para generar recomendaciones basadas en palabras clave
+function generateRecommendations(keywords) {
+  const recommendations = [];
+  
+  // Recomendaciones basadas en palabras clave específicas
+  if (keywords.includes("experiencia") || keywords.includes("años")) {
+    recommendations.push({
+      text: "Destaca tus años de experiencia relevante al principio de cada descripción de trabajo.",
+      action: "modify",
+      target: "experience",
+      content: "Añadir años de experiencia"
+    });
+  }
+  
+  if (keywords.includes("inglés") || keywords.includes("idiomas")) {
+    recommendations.push({
+      text: "Añade tu nivel de idiomas a las habilidades.",
+      action: "add",
+      target: "skills",
+      content: "Inglés (Nivel B2)"
+    });
+  }
+  
+  if (keywords.includes("equipo") || keywords.includes("trabajar en equipo")) {
+    recommendations.push({
+      text: "Menciona tus habilidades de trabajo en equipo en el resumen profesional.",
+      action: "modify",
+      target: "summary",
+      content: "trabajo en equipo"
+    });
+  }
+  
+  // Agrega recomendaciones basadas en tecnologías/herramientas
+  const techKeywords = ["python", "java", "javascript", "html", "css", "react", "angular", "node", 
+                        "sql", "nosql", "mongodb", "aws", "azure", "excel", "word", "powerpoint"];
+  
+  const foundTech = techKeywords.filter(tech => keywords.includes(tech));
+  if (foundTech.length > 0) {
+    recommendations.push({
+      text: `Asegúrate de incluir explícitamente estas tecnologías en tus habilidades: ${foundTech.join(", ")}.`,
+      action: "add",
+      target: "skills",
+      content: foundTech.join(", ")
+    });
+  }
+  
+  // Recomendaciones generales
+  recommendations.push({
+    text: "Adapta tu resumen profesional para que haga eco a las responsabilidades mencionadas en la oferta.",
+    action: null
+  });
+  
+  recommendations.push({
+    text: "Reordena tus habilidades poniendo primero las más relevantes para esta oferta.",
+    action: null
+  });
+  
+  return recommendations;
+}
+
+// Función para aplicar recomendaciones
+function applyRecommendation(action, target, content) {
+  switch (action) {
+    case "add":
+      if (target === "skills") {
+        // Añadir a las habilidades
+        const skillsTextarea = document.querySelector('textarea[name="skills"]');
+        if (skillsTextarea) {
+          const currentSkills = skillsTextarea.value.trim();
+          skillsTextarea.value = currentSkills ? `${currentSkills}, ${content}` : content;
+          skillsTextarea.dispatchEvent(new Event('input')); // Disparar evento input
+        }
+      }
+      break;
+      
+    case "modify":
+      if (target === "summary") {
+        // Modificar el resumen (simulado - en una app real esto modificaría el prompt de IA)
+        document.getElementById('ai-summary').dataset.keywords = 
+          (document.getElementById('ai-summary').dataset.keywords || '') + ',' + content;
+        
+        // Avisar al usuario
+        alert(`La palabra clave "${content}" se usará en la generación del resumen profesional.`);
+      }
+      else if (target === "experience") {
+        // Modificar experiencia
+        document.querySelectorAll('.experience-entry textarea').forEach(textarea => {
+          if (!textarea.value.toLowerCase().includes('años de experiencia')) {
+            const text = textarea.value;
+            textarea.value = text.replace(/^\s*/, match => 
+              `Con amplios años de experiencia. ${match}`
+            );
+            textarea.dispatchEvent(new Event('input')); // Disparar evento input
+          }
+        });
+      }
+      break;
+  }
+}
+
+// 6. Función para implementar sugerencias personalizadas mientras se escribe
+function setupSuggestions() {
+  const textareas = document.querySelectorAll('textarea[name="description"]');
+  
+  textareas.forEach(textarea => {
+    // Crear el contenedor de sugerencias
+    const suggestionsContainer = document.createElement('div');
+    suggestionsContainer.className = 'suggestions-container';
+    suggestionsContainer.style.display = 'none';
+    suggestionsContainer.style.position = 'absolute';
+    suggestionsContainer.style.width = '100%';
+    suggestionsContainer.style.marginTop = '5px';
+    suggestionsContainer.style.backgroundColor = 'white';
+    suggestionsContainer.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
+    suggestionsContainer.style.borderRadius = '5px';
+    suggestionsContainer.style.zIndex = '100';
+    suggestionsContainer.style.padding = '5px 0';
+    
+    // Añadir al DOM
+    textarea.parentNode.style.position = 'relative';
+    textarea.parentNode.appendChild(suggestionsContainer);
+    
+    // Sugerencias preconfiguradas basadas en tipos comunes de experiencia
+    const suggestionsByPrefix = {
+      "Respons": [
+        "Responsable de la gestión y coordinación del equipo de trabajo.",
+        "Responsable del análisis y optimización de procesos internos.",
+        "Responsable de la implementación y seguimiento de proyectos."
+      ],
+      "Desarroll": [
+        "Desarrollo e implementación de soluciones técnicas para mejorar la eficiencia.",
+        "Desarrollo de nuevas funcionalidades y mantenimiento de las existentes.",
+        "Desarrollo de estrategias para optimizar el rendimiento y la calidad."
+      ],
+      "Gestión": [
+        "Gestión de proyectos desde la fase de planificación hasta la entrega final.",
+        "Gestión de recursos y presupuestos para garantizar la rentabilidad.",
+        "Gestión de relaciones con clientes clave y proveedores estratégicos."
+      ],
+      "Colabor": [
+        "Colaboración con equipos multidisciplinares para alcanzar objetivos comunes.",
+        "Colaboración en la definición e implementación de mejoras continuas.",
+        "Colaboración estrecha con el departamento de calidad para garantizar estándares."
+      ],
+      "Implement": [
+        "Implementación de metodologías ágiles para mejorar la eficiencia del equipo.",
+        "Implementación de soluciones innovadoras que aumentaron la productividad en un 20%.",
+        "Implementación y mantenimiento de sistemas críticos para el negocio."
+      ],
+      "Análisis": [
+        "Análisis de datos para identificar oportunidades de mejora y optimización.",
+        "Análisis y resolución de incidencias técnicas de forma eficiente.",
+        "Análisis de requisitos y diseño de soluciones adaptadas a las necesidades."
+      ],
+      "Logr": [
+        "Logré reducir los tiempos de entrega en un 15% mediante la optimización de procesos.",
+        "Logré aumentar la satisfacción del cliente en un 25% a través de mejoras en el servicio.",
+        "Logré implementar con éxito un nuevo sistema que mejoró la eficiencia operativa."
+      ]
+    };
+    
+    // Monitorear lo que escribe el usuario para mostrar sugerencias
+    let typingTimer;
+    textarea.addEventListener('input', () => {
+      clearTimeout(typingTimer);
+      
+      typingTimer = setTimeout(() => {
+        const text = textarea.value;
+        const cursorPosition = textarea.selectionStart;
+        
+        // Obtener la palabra actual (desde el último espacio hasta el cursor)
+        const textBeforeCursor = text.substring(0, cursorPosition);
+        const words = textBeforeCursor.split(/\s+/);
+        const currentWord = words[words.length - 1];
+        
+        // Buscar sugerencias que coincidan con el prefijo actual
+        let matchingSuggestions = [];
+        
+        for (const [prefix, suggestions] of Object.entries(suggestionsByPrefix)) {
+          if (currentWord.length >= 5 && prefix.toLowerCase().startsWith(currentWord.toLowerCase())) {
+            matchingSuggestions = suggestions;
+            break;
+          }
+        }
+        
+        // Mostrar sugerencias si las hay
+        if (matchingSuggestions.length > 0) {
+          suggestionsContainer.innerHTML = '';
+          suggestionsContainer.style.display = 'block';
+          
+          matchingSuggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'suggestion-item';
+            suggestionItem.textContent = suggestion;
+            suggestionItem.style.padding = '8px 15px';
+            suggestionItem.style.cursor = 'pointer';
+            suggestionItem.style.transition = 'background-color 0.3s';
+            
+            suggestionItem.addEventListener('mouseenter', () => {
+              suggestionItem.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+            });
+            
+            suggestionItem.addEventListener('mouseleave', () => {
+              suggestionItem.style.backgroundColor = 'transparent';
+            });
+            
+            suggestionItem.addEventListener('click', () => {
+              // Reemplazar la palabra actual con la sugerencia completa
+              const beforeWord = text.substring(0, cursorPosition - currentWord.length);
+              const afterWord = text.substring(cursorPosition);
+              textarea.value = beforeWord + suggestion + afterWord;
+              
+              // Actualizar la posición del cursor
+              const newPosition = beforeWord.length + suggestion.length;
+              textarea.setSelectionRange(newPosition, newPosition);
+              
+              // Ocultar sugerencias
+              suggestionsContainer.style.display = 'none';
+              
+              // Dar foco al textarea
+              textarea.focus();
+            });
+            
+            suggestionsContainer.appendChild(suggestionItem);
+          });
+        } else {
+          suggestionsContainer.style.display = 'none';
+        }
+      }, 300);
+    });
+    
+    // Ocultar sugerencias al hacer clic fuera
+    document.addEventListener('click', (e) => {
+      if (!textarea.contains(e.target) && !suggestionsContainer.contains(e.target)) {
+        suggestionsContainer.style.display = 'none';
+      }
+    });
+  });
+}
+
+// Inicializar todas las mejoras de IA cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+  setupRealtimeFeedback();
+  setupGrammarChecker();
+  setupJobOfferAdaptation();
+  setupSuggestions();
+});
+// Función para forzar un repaint en elementos fijos cuando se desplaza
+function forceRepaintOnScroll() {
+  let lastScrollPosition = 0;
+  const fixedElements = document.querySelectorAll('.progress-bar, .theme-toggle');
+  
+  window.addEventListener('scroll', function() {
+    // Verificar si ha habido un desplazamiento significativo
+    if (Math.abs(window.scrollY - lastScrollPosition) > 50) {
+      lastScrollPosition = window.scrollY;
+      
+      // Forzar repaint en elementos fijos
+      fixedElements.forEach(element => {
+        // Técnica para forzar repaint: modificar temporalmente el estilo
+        const originalDisplay = element.style.display;
+        element.style.display = 'none';
+        // Este pequeño retraso es necesario para que el navegador procese el cambio
+        setTimeout(() => {
+          element.style.display = originalDisplay;
+        }, 1);
+      });
+    }
+  });
+}
+
+// Inicializar la función cuando se carga el documento
+document.addEventListener('DOMContentLoaded', forceRepaintOnScroll);
+
+// Añade esta función al final de tu archivo script.js
+
+// Función para asegurar que las secciones permanezcan visibles después de la navegación
+function ensureSectionsVisibility() {
+  // Crear observador de intersección para detectar qué sección está en viewport
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      // Si la sección está visible
+      if (entry.isIntersecting) {
+        const section = entry.target;
+        const sectionIndex = Array.from(sections).indexOf(section);
+        
+        // Asegurar que la sección sea visible (forzar opacity 1)
+        gsap.to(section, { opacity: 1, duration: 0.3 });
+        gsap.to(section.querySelector(".text-block"), { opacity: 1, y: 0, duration: 0.3 });
+        gsap.to(section.querySelector(".image-block"), { opacity: 1, x: 0, duration: 0.3 });
+        
+        // Actualizar tema basado en la sección actual
+        applyTheme(sectionIndex);
+        
+        // Actualizar pasos activos en la barra de progreso
+        steps.forEach((step, i) => {
+          if (i <= sectionIndex) {
+            step.classList.add("active");
+          } else {
+            step.classList.remove("active");
+          }
+        });
+      }
+    });
+  }, { threshold: 0.3 }); // Modificar este valor según sea necesario
+  
+  // Observar todas las secciones
+  sections.forEach(section => {
+    observer.observe(section);
+  });
+}
+
+// Ejecutar la función cuando la página se haya cargado completamente
+window.addEventListener('load', ensureSectionsVisibility);
+
+// Mejorar evento de clic para la navegación entre secciones
+steps.forEach((step, index) => {
+  step.addEventListener("click", () => {
+    // Desplazamiento suave a la sección
+    sections[index].scrollIntoView({ behavior: "smooth" });
+    
+    // Forzar la visibilidad de la sección target después de un breve retraso
+    setTimeout(() => {
+      gsap.to(sections[index], { opacity: 1, duration: 0.3 });
+      gsap.to(sections[index].querySelector(".text-block"), { opacity: 1, y: 0, duration: 0.3 });
+      gsap.to(sections[index].querySelector(".image-block"), { opacity: 1, x: 0, duration: 0.3 });
+    }, 500);
+    
+    // Actualizar el tema
+    applyTheme(index);
+    
+    // Actualizar pasos activos
+    steps.forEach((s, i) => {
+      if (i <= index) s.classList.add("active");
+      else s.classList.remove("active");
+    });
+  });
 });
