@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generador de CV con IA</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <!-- Barra de progreso -->
+  <div class="progress-bar">
+    <div class="progress-bar-fill"></div>
+    <div class="progress-step active" data-step="1">1️⃣</div>
+    <div class="progress-step" data-step="2">2️⃣</div>
+    <div class="progress-step" data-step="3">3️⃣</div>
+    <div class="progress-step" data-step="4">4️⃣</div>
+  </div>
+
+  <!-- Contenedor principal -->
+  <div class="story-container">
+    <!-- SECCIÓN 1: SELECCIÓN DE TIPO DE CV -->
+    <section class="story-section" id="section1">
+      <div class="text-block">
+        <h2>Crea tu Currículum Profesional</h2>
+        <p>Bienvenido a nuestro generador de CV con inteligencia artificial. Elige el tipo de currículum que mejor se adapte a tu sector profesional para comenzar.</p>
+        
+        <div class="cv-type-options">
+          <div class="cv-type-card" data-type="tech">
+            <h3>Tecnología</h3>
+            <p>Perfecto para desarrolladores de software, especialistas en TI y profesionales tech</p>
+          </div>
+          
+          <div class="cv-type-card" data-type="business">
+            <h3>Negocios</h3>
+            <p>Ideal para cargos directivos, finanzas y roles administrativos</p>
+          </div>
+          
+          <div class="cv-type-card" data-type="creative">
+            <h3>Creatividad</h3>
+            <p>Diseñado para diseñadores, escritores, artistas y profesionales de medios</p>
+          </div>
+          
+          <div class="cv-type-card" data-type="healthcare">
+            <h3>Salud</h3>
+            <p>Adaptado para médicos, enfermeros y trabajadores sanitarios</p>
+          </div>
+        </div>
+      </div>
+      <div class="image-block">
+      </div>
+      <!-- Añade este código después de la selección de tipo de CV (en la primera sección) -->
+<div class="style-selector">
+    <h3>Elige un estilo para tu CV</h3>
+    <div class="cv-styles-container">
+      <div class="cv-style-card" data-style="profesional" onclick="selectStyle('profesional')">
+        <div class="style-preview profesional-preview"></div>
+        <h4>Profesional</h4>
+        <p>Fondo azul oscuro con acentos dorados</p>
+      </div>
+      
+      <div class="cv-style-card" data-style="minimalista" onclick="selectStyle('minimalista')">
+        <div class="style-preview minimalista-preview"></div>
+        <h4>Minimalista</h4>
+        <p>Diseño limpio en blanco y negro</p>
+      </div>
+      
+      <div class="cv-style-card" data-style="creativo" onclick="selectStyle('creativo')">
+        <div class="style-preview creativo-preview"></div>
+        <h4>Creativo</h4>
+        <p>Diseño moderno con acentos vibrantes</p>
+      </div>
+      
+      <div class="cv-style-card" data-style="ejecutivo" onclick="selectStyle('ejecutivo')">
+        <div class="style-preview ejecutivo-preview"></div>
+        <h4>Ejecutivo</h4>
+        <p>Elegante diseño en tonos grises y azul</p>
+      </div>
+      
+      <div class="cv-style-card" data-style="tecnologico" onclick="selectStyle('tecnologico')">
+        <div class="style-preview tecnologico-preview"></div>
+        <h4>Tecnológico</h4>
+        <p>Diseño moderno con estilo digital</p>
+      </div>
+      
+      <div class="cv-style-card" data-style="academico" onclick="selectStyle('academico')">
+        <div class="style-preview academico-preview"></div>
+        <h4>Académico</h4>
+        <p>Formato tradicional para entornos educativos</p>
+      </div>
+    </div>
+  </div>
+    </section>
+
+    
+    <!-- SECCIÓN 2: FORMULARIO DE DATOS -->
+    <section class="story-section" id="section2">
+      <div class="text-block">
+        <h2>Introduce tu Información</h2>
+        <p>Completa tus datos profesionales a continuación. Nuestra IA ayudará a optimizar tu CV para máximo impacto.</p>
+        
+        <form id="cv-form" class="cv-form">
+          <div class="form-group">
+            <label>Nombre Completo</label>
+            <input type="text" name="name" placeholder="Juan Pérez" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="juan@ejemplo.com" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="tel" name="phone" placeholder="+34 123 456 789">
+          </div>
+          
+          <div class="form-section">
+            <h3>Educación</h3>
+            <div id="education-container">
+              <div class="form-subgroup education-entry">
+                <input type="text" name="institution" placeholder="Nombre de la Institución">
+                <input type="text" name="degree" placeholder="Título/Certificado">
+                <input type="text" name="year" placeholder="Año">
+              </div>
+            </div>
+            <button type="button" id="add-education">+ Añadir Educación</button>
+          </div>
+          
+          <div class="form-section">
+            <h3>Experiencia</h3>
+            <div id="experience-container">
+              <div class="form-subgroup experience-entry">
+                <input type="text" name="company" placeholder="Empresa">
+                <input type="text" name="position" placeholder="Puesto">
+                <input type="text" name="duration" placeholder="Duración (ej. 2019-2022)">
+                <textarea name="description" placeholder="Descripción del trabajo" rows="3"></textarea>
+              </div>
+            </div>
+            <button type="button" id="add-experience">+ Añadir Experiencia</button>
+          </div>
+          
+          <div class="form-group">
+            <label>Habilidades (separadas por comas)</label>
+            <textarea name="skills" placeholder="Liderazgo, Gestión de Proyectos, Microsoft Office" rows="3"></textarea>
+          </div>
+        </form>
+        
+        <button id="generate-cv-btn" class="next-section-btn">Generar CV con IA</button>
+      </div>
+      <div class="image-block">
+        <img src="https://raw.githubusercontent.com/mickaellherminez/img/main/codepen/january-week1/image-2.png" alt="Ilustración de formulario" class="image-placeholder" />
+      </div>
+    </section>
+
+    <!-- SECCIÓN 3: PROCESAMIENTO IA -->
+    <section class="story-section" id="section3">
+      <div class="text-block">
+        <h2>Mejora con IA</h2>
+        <p>Nuestra IA Gemini está optimizando tu CV analizando estándares de la industria y mejorando tu presentación profesional.</p>
+        
+        <div class="ai-processing">
+          <div id="processing-indicator" class="processing-indicator">
+            <div class="spinner"></div>
+            <p>Procesando tu información...</p>
+          </div>
+          
+          <div id="ai-improvements" class="ai-improvements hidden">
+            <h3>Mejoras con IA</h3>
+            <div class="improvement-item">
+              <h4>Resumen Profesional</h4>
+              <p id="ai-summary">Profesional con experiencia demostrada y pasión por la innovación.</p>
+            </div>
+            <div class="improvement-item">
+              <h4>Experiencia Destacada</h4>
+              <p>Hemos optimizado las descripciones de tu experiencia con verbos de acción y logros cuantificables.</p>
+            </div>
+            <div class="improvement-item">
+              <h4>Organización de Habilidades</h4>
+              <p>Tus habilidades han sido categorizadas y priorizadas según los estándares de la industria seleccionada.</p>
+            </div>
+          </div>
+          
+          <button id="preview-btn" class="next-section-btn hidden">Vista Previa de tu CV</button>
+        </div>
+      </div>
+      <div class="image-block">
+        <img src="https://raw.githubusercontent.com/mickaellherminez/img/main/codepen/january-week1/image-3.png" alt="Ilustración de procesamiento IA" class="image-placeholder" />
+      </div>
+    </section>
+
+    <!-- SECCIÓN 4: VISTA PREVIA Y DESCARGA -->
+    <section class="story-section" id="section4">
+      <div class="text-block">
+        <h2>Tu CV Profesional</h2>
+        <p>¡Tu currículum está listo! Previsualiza a continuación y descarga en tu formato preferido.</p>
+        
+        <div id="cv-preview" class="cv-preview">
+          <div class="cv-header">
+            <h3 id="preview-name">Nombre Completo</h3>
+            <div class="cv-contact">
+              <p><span id="preview-email">email@ejemplo.com</span> | <span id="preview-phone">+34 123 456 789</span></p>
+            </div>
+          </div>
+          
+          <div class="cv-summary">
+            <h4>Resumen Profesional</h4>
+            <p id="preview-summary">Resumen profesional generado por IA.</p>
+          </div>
+          
+          <div class="cv-experience">
+            <h4>Experiencia Profesional</h4>
+            <div id="preview-experience">
+              <!-- Se llenará con JavaScript -->
+            </div>
+          </div>
+          
+          <div class="cv-education">
+            <h4>Educación</h4>
+            <div id="preview-education">
+              <!-- Se llenará con JavaScript -->
+            </div>
+          </div>
+          
+          <div class="cv-skills">
+            <h4>Habilidades</h4>
+            <div id="preview-skills" class="skills-list">
+              <!-- Se llenará con JavaScript -->
+            </div>
+          </div>
+        </div>
+        
+        <div class="download-options">
+          <h3>Opciones de Descarga</h3>
+          <div class="download-buttons">
+            <button id="download-pdf" class="download-btn pdf">
+              Descargar PDF
+            </button>
+            <button id="download-docx" class="download-btn docx">
+              Descargar DOCX
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="image-block">
+        <img src="https://raw.githubusercontent.com/mickaellherminez/img/main/codepen/january-week1/image-1.png" alt="Ilustración de vista previa CV" class="image-placeholder" />
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal para vista ampliada -->
+  <div class="modal-overlay">
+    <img class="modal-image" src="" alt="Imagen en grande">
+    <div class="modal-close"><span>×</span></div>
+  </div>
+
+  <!-- Scripts -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js'></script>
+  
+<!-- Bibliotecas para exportación de documentos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://unpkg.com/docx@8.0.0/build/index.js"></script>
+    <script src="./script.js"></script>
+</body>
+</html>
