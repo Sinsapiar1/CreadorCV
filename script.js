@@ -457,7 +457,7 @@ function crearPromptParaGemini(datos, tipoCV) {
   // Función para llamar a la API de Gemini
   async function llamarGeminiAPI(prompt) {
     // Reemplaza 'TU_API_KEY' con tu clave API real de Gemini
-    const API_KEY = 'AIzaSyD3LUr6ntBBvi54YpPeMjjnAz9pr94u0IM';
+    const API_KEY = process.env.GOOGLE_API_KEY;
     const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
     
     const datos = {
