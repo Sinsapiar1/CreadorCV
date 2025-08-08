@@ -666,6 +666,17 @@ previewBtn.addEventListener('click', () => {
   document.getElementById('preview-phone').textContent = formData.phone;
   document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
   
+  // Foto
+  const previewPhoto = document.getElementById('preview-photo');
+  if (previewPhoto) {
+    if (avatarDataUrl) {
+      previewPhoto.src = avatarDataUrl;
+      previewPhoto.style.display = 'block';
+    } else {
+      previewPhoto.style.display = 'none';
+    }
+  }
+  
   // Experiencia
   const experienceContainer = document.getElementById('preview-experience');
   experienceContainer.innerHTML = '';
@@ -772,12 +783,12 @@ downloadPDFBtn.addEventListener('click', () => {
       doc.text(contactInfo, contactX, style.contactPositionY);
 
       // Añadir foto si existe
-      if (photoDataUrl) {
-        const type = photoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
-        const imgW = 24, imgH = 24;
+      if (avatarDataUrl) {
+        const type = 'PNG';
+        const imgW = 22, imgH = 22; // miniatura uniforme
         const imgX = 210 - style.margin - imgW;
-        const imgY = Math.max(10, style.namePositionY - 8);
-        try { doc.addImage(photoDataUrl, type, imgX, imgY, imgW, imgH); } catch (e) { console.warn('No se pudo insertar la imagen en PDF:', e); }
+        const imgY = Math.max(8, style.namePositionY - 10);
+        try { doc.addImage(avatarDataUrl, type, imgX, imgY, imgW, imgH); } catch (e) { console.warn('No se pudo insertar la imagen en PDF:', e); }
       }
       
       // Variable para la posición Y actual
@@ -1443,11 +1454,11 @@ downloadDOCXBtn.addEventListener('click', async () => {
       
       // Foto (si existe)
       let imageRun = null;
-      if (typeof docx !== 'undefined' && photoDataUrl) {
+      if (typeof docx !== 'undefined' && avatarDataUrl) {
         try {
-          const arrayBuffer = dataURLToArrayBuffer(photoDataUrl);
+          const arrayBuffer = dataURLToArrayBuffer(avatarDataUrl);
           if (docx.ImageRun) {
-            imageRun = new docx.ImageRun({ data: arrayBuffer, transformation: { width: 96, height: 96 } });
+            imageRun = new docx.ImageRun({ data: arrayBuffer, transformation: { width: 64, height: 64 } });
           }
         } catch (e) { console.warn('No se pudo insertar imagen en DOCX', e); }
       }
@@ -2705,6 +2716,17 @@ previewBtn.addEventListener('click', () => {
   document.getElementById('preview-phone').textContent = formData.phone;
   document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
   
+  // Foto
+  const previewPhoto = document.getElementById('preview-photo');
+  if (previewPhoto) {
+    if (avatarDataUrl) {
+      previewPhoto.src = avatarDataUrl;
+      previewPhoto.style.display = 'block';
+    } else {
+      previewPhoto.style.display = 'none';
+    }
+  }
+  
   // Experiencia
   const experienceContainer = document.getElementById('preview-experience');
   experienceContainer.innerHTML = '';
@@ -3633,10 +3655,10 @@ function exportToHTML() {
   let bodyHtml = '';
   if (isTwoCol) {
     // Sidebar con Contacto/Educación/Habilidades
-    const sidePhoto = photoDataUrl ? `<img class=\"photo\" src=\"${photoDataUrl}\"/>` : '';
+    const sidePhoto = avatarDataUrl ? `<img class=\"photo\" src=\"${avatarDataUrl}\"/>` : '';
     bodyHtml = `<div class=\"page\"><aside class=\"sidebar\">${sidePhoto}<section><h2>CONTACTO</h2><div>${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div></section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></aside><main><div class=\"name\">${escape(formData.name)}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section></main></div>`;
   } else {
-    const inlinePhoto = photoDataUrl ? `<img class=\"photo\" src=\"${photoDataUrl}\" style=\"float:right;margin-left:12px;\"/>` : '';
+    const inlinePhoto = avatarDataUrl ? `<img class=\"photo\" src=\"${avatarDataUrl}\" style=\"float:right;margin-left:12px;\"/>` : '';
     bodyHtml = `<div class=\"page\">${inlinePhoto}<div class=\"name\">${escape(formData.name)}</div><div class=\"contact\">${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></div>`;
   }
   const html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>${escape(formData.name)} - CV</title><style>${css} @media print { @page { size: A4; margin: 16mm; } .page{max-width: none; padding: 0;} }</style></head><body>${bodyHtml}</body></html>`;
@@ -3728,16 +3750,68 @@ document.addEventListener('DOMContentLoaded', function() {
 const photoInput = document.getElementById('photo-input');
 const photoPreview = document.getElementById('photo-preview');
 let photoDataUrl = '';
+let avatarDataUrl = '';
+
+async function generateAvatar(dataUrl, size = 128) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // Fondo transparente
+      ctx.clearRect(0, 0, size, size);
+      // Clip circular
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.save();
+      ctx.clip();
+      // Cover image dentro del círculo
+      const imgRatio = img.width / img.height;
+      const canvasRatio = 1;
+      let drawW, drawH;
+      if (imgRatio > canvasRatio) {
+        drawH = size;
+        drawW = size * imgRatio;
+      } else {
+        drawW = size;
+        drawH = size / imgRatio;
+      }
+      const dx = (size - drawW) / 2;
+      const dy = (size - drawH) / 2;
+      ctx.drawImage(img, dx, dy, drawW, drawH);
+      ctx.restore();
+      // Borde blanco
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      // Anillo gris claro
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 1.5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.crossOrigin = 'anonymous';
+    img.src = dataUrl;
+  });
+}
 
 if (photoInput) {
   photoInput.addEventListener('change', (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       photoDataUrl = reader.result;
+      avatarDataUrl = await generateAvatar(photoDataUrl, 128);
       if (photoPreview) {
-        photoPreview.src = photoDataUrl;
+        photoPreview.src = avatarDataUrl;
         photoPreview.style.display = 'block';
       }
     };
@@ -3756,3 +3830,25 @@ function setupBackButtons() {
 }
 
 document.addEventListener('DOMContentLoaded', setupBackButtons);
+
+// ... existing code ...
+  // Foto
+-  const previewPhoto = document.getElementById('preview-photo');
+-  if (previewPhoto) {
+-    if (photoDataUrl) {
+-      previewPhoto.src = photoDataUrl;
+-      previewPhoto.style.display = 'block';
+-    } else {
+-      previewPhoto.style.display = 'none';
+-    }
+-  }
++  const previewPhoto = document.getElementById('preview-photo');
++  if (previewPhoto) {
++    if (avatarDataUrl) {
++      previewPhoto.src = avatarDataUrl;
++      previewPhoto.style.display = 'block';
++    } else {
++      previewPhoto.style.display = 'none';
++    }
++  }
+// ... existing code ...
