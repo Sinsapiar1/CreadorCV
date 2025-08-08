@@ -251,32 +251,27 @@ modalOverlay.addEventListener("click", (e) => {
 
 // 6) Funcionalidad específica para el generador de CV
 
-// Selección de tipo de CV
-cvTypeCards.forEach(card => {
-  card.addEventListener('click', () => {
-    selectedCVType = card.getAttribute('data-type');
-    console.log(`Tipo de CV seleccionado: ${selectedCVType}`);
-    
-    // Navegar a la siguiente sección
-    sections[1].scrollIntoView({ behavior: "smooth" });
-    
-    // Forzar la visibilidad después de un breve retraso
+// Selección de tipo de CV (función global para onclick inline)
+function selectCVType(type) {
+  selectedCVType = type;
+  // marcar tarjeta seleccionada
+  document.querySelectorAll('.cv-type-card').forEach(card => {
+    if (card.getAttribute('data-type') === type) card.classList.add('selected');
+    else card.classList.remove('selected');
+  });
+  // Navegar a la sección 2
+  if (sections && sections[1]) {
+    sections[1].scrollIntoView({ behavior: 'smooth' });
     setTimeout(() => {
       gsap.to(sections[1], { opacity: 1, duration: 0.3 });
-      gsap.to(sections[1].querySelector(".text-block"), { opacity: 1, y: 0, duration: 0.3 });
-      gsap.to(sections[1].querySelector(".image-block"), { opacity: 1, x: 0, duration: 0.3 });
-      
-      // Actualizar pasos activos
-      steps.forEach((step, i) => {
-        if (i <= 1) step.classList.add("active");
-        else step.classList.remove("active");
-      });
-      
-      // Actualizar tema
+      gsap.to(sections[1].querySelector('.text-block'), { opacity: 1, y: 0, duration: 0.3 });
+      gsap.to(sections[1].querySelector('.image-block'), { opacity: 1, x: 0, duration: 0.3 });
+      steps.forEach((step, i) => { if (i <= 1) step.classList.add('active'); else step.classList.remove('active'); });
       applyTheme(1);
-    }, 500);
-  });
-});
+    }, 300);
+  }
+}
+window.selectCVType = selectCVType;
 
 // Añadir entrada de educación
 addEducationBtn.addEventListener('click', () => {
