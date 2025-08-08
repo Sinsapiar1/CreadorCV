@@ -3846,3 +3846,6 @@ function setupBackButtons() {
 
 document.addEventListener('DOMContentLoaded', setupBackButtons);
 
+// Garantizar disponibilidad global para onclick en HTML
+window.selectStyle = selectStyle;
+
