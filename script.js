@@ -633,6 +633,30 @@ function procesarRespuestaGemini(respuesta) {
     }
   }
 
+// Estilos de dos columnas aplicables en preview/export
+const twoColumnStyles = new Set(['ejecutivo', 'tecnologico']);
+
+function adjustPreviewLayout() {
+  const preview = document.getElementById('cv-preview');
+  if (!preview) return;
+  if (twoColumnStyles.has(selectedStyle)) {
+    preview.classList.add('two-col');
+    // Crear contenedor sidebar si no existe
+    if (!preview.querySelector('.cv-sidebar')) {
+      const sidebar = document.createElement('div');
+      sidebar.className = 'cv-sidebar';
+      const summary = preview.querySelector('.cv-summary');
+      preview.insertBefore(sidebar, summary);
+      const edu = preview.querySelector('.cv-education');
+      const skills = preview.querySelector('.cv-skills');
+      if (edu) sidebar.appendChild(edu);
+      if (skills) sidebar.appendChild(skills);
+    }
+  } else {
+    preview.classList.remove('two-col');
+  }
+}
+
 // Previsualizar CV
 previewBtn.addEventListener('click', () => {
   // Navegar a la sección de previsualización
@@ -682,6 +706,16 @@ previewBtn.addEventListener('click', () => {
     skillTag.textContent = skill;
     skillsContainer.appendChild(skillTag);
   });
+
+  // Ajustar layout visual
+  adjustPreviewLayout();
+  
+  // Esperar a que se cargue la vista previa antes de añadir los botones
+  setTimeout(() => {
+    // Agregar botones de compartir y exportar HTML
+    addSharingButtons();
+    addExportToHTMLButton();
+  }, 500);
 });
 
 // Simulación de descarga del CV
@@ -837,44 +871,25 @@ downloadPDFBtn.addEventListener('click', () => {
       });
       
       // Añadir habilidades
-      currentY = addSection('HABILIDADES', currentY);
-      currentY += style.itemSpacing;
-      
-      // Implementar lista de habilidades según el estilo
-      if (style.skillsStyle === 'bullets') {
-        // Estilo con viñetas
-        formData.skills.forEach(skill => {
-          const bulletY = currentY;
-          
-          // Dibujar viñeta
-          if (style.bullet.type === 'circle') {
+      if (style.layout !== 'two-column') {
+        currentY = addSection('HABILIDADES', currentY);
+        currentY += style.itemSpacing;
+        if (style.skillsStyle === 'bullets') {
+          formData.skills.forEach(skill => {
+            const bulletY = currentY;
             doc.setDrawColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
             doc.setFillColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
             doc.circle(style.margin + 2, bulletY - 1.5, 1.5, 'F');
-          } else if (style.bullet.type === 'square') {
-            doc.setDrawColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
-            doc.setFillColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
-            doc.rect(style.margin, bulletY - 3, 3, 3, 'F');
-          } else {
-            // Viñeta de texto
             doc.setFont(style.textFont.name, style.textFont.style);
             doc.setFontSize(style.textFont.size);
-            doc.setTextColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
-            doc.text('•', style.margin, bulletY);
-          }
-          
-          // Añadir texto de la habilidad
-          doc.setFont(style.textFont.name, style.textFont.style);
-          doc.setFontSize(style.textFont.size);
-          doc.setTextColor(style.textFont.color.r, style.textFont.color.g, style.textFont.color.b);
-          doc.text(skill, style.margin + style.bullet.spacing, bulletY);
-          
-          currentY += style.bullet.lineHeight;
-        });
-      } else {
-        // Estilo en línea
-        const habilidadesText = formData.skills.join(', ');
-        currentY = addParagraph(habilidadesText, style.margin, currentY);
+            doc.setTextColor(style.textFont.color.r, style.textFont.color.g, style.textFont.color.b);
+            doc.text(skill, style.margin + style.bullet.spacing, bulletY);
+            currentY += style.bullet.lineHeight;
+          });
+        } else {
+          const habilidadesText = formData.skills.join(', ');
+          currentY = addParagraph(habilidadesText, style.margin, currentY);
+        }
       }
       
       // Guardar y descargar el PDF
@@ -1401,6 +1416,7 @@ downloadDOCXBtn.addEventListener('click', () => {
     try {
       // Obtener la configuración de estilo para DOCX
       const styleConfig = getDOCXStyleConfig(selectedStyle);
+      styleConfig.twoColumn = ['ejecutivo','tecnologico'].includes(selectedStyle);
    
       // Array para almacenar todos los elementos del documento
       const documentElements = [];
@@ -1604,7 +1620,8 @@ downloadDOCXBtn.addEventListener('click', () => {
                 right: styleConfig.margins.right,
                 bottom: styleConfig.margins.bottom,
                 left: styleConfig.margins.left
-              }
+              },
+              columns: styleConfig.twoColumn ? { count: 2, space: 708 } : undefined
             }
           },
           children: documentElements
@@ -2691,6 +2708,9 @@ previewBtn.addEventListener('click', () => {
     skillTag.textContent = skill;
     skillsContainer.appendChild(skillTag);
   });
+  
+  // Ajustar layout visual
+  adjustPreviewLayout();
   
   // Esperar a que se cargue la vista previa antes de añadir los botones
   setTimeout(() => {
