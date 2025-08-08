@@ -470,30 +470,36 @@ function crearPromptParaGemini(datos, tipoCV) {
   
   Instrucciones:
   ${instruccionesEspecificas}
+  Mejora TODAS las secciones (titular profesional, resumen, experiencias con bullets accionables y cuantificados, reordenamiento/categorización de habilidades) con tono humano y profesional.
   
   GENERA SÓLO UN OBJETO JSON VÁLIDO con la siguiente estructura exacta (sin texto adicional antes o después):
-  
   {
-    "resumen": "Escribe aquí un resumen profesional impactante de 3-4 líneas que destaque las fortalezas y experiencia del candidato",
+    "titular": "Ej. Desarrollador Full Stack | React + Node.js",
+    "resumen": "Resumen profesional de 3-4 líneas con impacto",
     "experienciasMejoradas": [
       {
         "indice": 0,
-        "descripcionMejorada": "Escribe aquí la primera experiencia mejorada"
-      },
-      {
-        "indice": 1,
-        "descripcionMejorada": "Escribe aquí la segunda experiencia mejorada"
+        "titulo": "Puesto mejorado",
+        "empresa": "Empresa",
+        "periodo": "AAAA-AAAA",
+        "bullets": ["Logro/acción cuantificado 1", "Logro/acción 2", "Logro/acción 3"],
+        "tecnologias": ["React", "Node", "AWS"]
       }
     ],
-    "habilidadesOrdenadas": ["Habilidad1", "Habilidad2", "Habilidad3"]
+    "habilidadesOrdenadas": {
+      "tecnicas": ["Tech1", "Tech2"],
+      "blandas": ["Comunicación", "Liderazgo"],
+      "herramientas": ["Jira", "Git"],
+      "idiomas": ["Inglés B2"]
+    }
   }
   
   IMPORTANTE: 
   1. Asegúrate de que tu respuesta sea SOLAMENTE el objeto JSON válido.
-  2. No incluyas comillas triples, ni la palabra 'json' u otros marcadores antes o después del JSON.
+  2. No incluyas comillas triples ni etiquetas.
   3. El JSON debe tener exactamente la estructura mostrada arriba.
-  4. Incluye solo tantos objetos en "experienciasMejoradas" como existan en los datos originales.
-  5. Usa sólo las habilidades originales en "habilidadesOrdenadas", ordenadas por relevancia.`;
+  4. Incluye tantos objetos en "experienciasMejoradas" como existan en los datos originales (mantén el campo indice).
+  5. Usa sólo las habilidades originales (y añade categorías) en "habilidadesOrdenadas".`;
   }
   
   // Función para llamar a la API de Gemini (legacy, reemplazada más abajo)
@@ -536,102 +542,88 @@ function crearPromptParaGemini(datos, tipoCV) {
  // Función mejorada para procesar la respuesta de Gemini
 function procesarRespuestaGemini(respuesta) {
     try {
-      // Extraer el texto generado por la IA
       const textoGenerado = respuesta.candidates[0].content.parts[0].text;
-      console.log("Respuesta de Gemini:", textoGenerado);
-      
       let datosJSON;
-      
-      // Intentar encontrar y extraer un JSON válido de la respuesta
-      // Buscar contenido entre llaves {} que podría ser JSON
       const jsonMatch = textoGenerado.match(/\{[\s\S]*\}/);
-      
       if (jsonMatch) {
         try {
-          // Intentar analizar el JSON encontrado
           datosJSON = JSON.parse(jsonMatch[0]);
-          console.log("JSON extraído con éxito:", datosJSON);
         } catch (jsonError) {
-          console.error("Error al analizar el JSON extraído:", jsonError);
-          // Continuar con el flujo alternativo
-          throw new Error("No se pudo analizar el JSON");
+          throw new Error('No se pudo analizar el JSON');
         }
       } else {
-        // Si no se encuentra un formato JSON, extraer información mediante análisis de texto
-        console.log("No se encontró formato JSON, procesando como texto plano");
-        throw new Error("No se encontró formato JSON");
+        throw new Error('No se encontró formato JSON');
       }
-      
-      // Si llegamos aquí, tenemos un JSON válido
-      // Actualizar el resumen en la interfaz
+
+      // Titular
+      if (datosJSON.titular) {
+        // Lo mostramos encima del nombre en preview-summary como prefijo
+        const summaryEl = document.getElementById('ai-summary');
+        const titular = datosJSON.titular;
+        if (summaryEl) {
+          summaryEl.dataset.titular = titular;
+        }
+        formData.aiHeadline = titular;
+      }
+
+      // Resumen
       if (datosJSON.resumen) {
         document.getElementById('ai-summary').textContent = datosJSON.resumen;
         formData.aiSummary = datosJSON.resumen;
-      } else {
-        // Buscar otras posibles claves para el resumen
-        const posiblesClaves = ['resumen', 'summary', 'profesionalSummary', 'perfil', 'profile'];
-        for (const clave of posiblesClaves) {
-          if (datosJSON[clave]) {
-            document.getElementById('ai-summary').textContent = datosJSON[clave];
-            formData.aiSummary = datosJSON[clave];
-            break;
-          }
-        }
       }
-      
-      // Mejorar las descripciones de experiencia si están disponibles
-      if (datosJSON.experienciasMejoradas) {
-        datosJSON.experienciasMejoradas.forEach(mejora => {
-          if (formData.experience[mejora.indice]) {
-            formData.experience[mejora.indice].description = mejora.descripcionMejorada;
+
+      // Experiencias mejoradas
+      if (Array.isArray(datosJSON.experienciasMejoradas)) {
+        datosJSON.experienciasMejoradas.forEach(mej => {
+          const idx = mej.indice;
+          if (formData.experience[idx]) {
+            // Construir texto con bullets si vienen
+            if (Array.isArray(mej.bullets) && mej.bullets.length) {
+              formData.experience[idx].description = mej.bullets.map(b => `• ${b}`).join('\n');
+            }
+            if (mej.titulo) formData.experience[idx].position = mej.titulo;
+            if (mej.empresa) formData.experience[idx].company = mej.empresa;
+            if (mej.periodo) formData.experience[idx].duration = mej.periodo;
+            if (Array.isArray(mej.tecnologias)) formData.experience[idx].tech = mej.tecnologias;
           }
         });
       }
-      
-      // Actualizar el orden de las habilidades si están disponibles
-      if (datosJSON.habilidadesOrdenadas) {
-        formData.skills = datosJSON.habilidadesOrdenadas;
+
+      // Habilidades categorizadas
+      if (datosJSON.habilidadesOrdenadas && typeof datosJSON.habilidadesOrdenadas === 'object') {
+        const cats = datosJSON.habilidadesOrdenadas;
+        const flat = ['tecnicas','blandas','herramientas','idiomas']
+          .filter(k => Array.isArray(cats[k]))
+          .map(k => cats[k])
+          .flat();
+        if (flat.length) formData.skills = flat;
+        formData.skillsCategorized = cats;
       }
-      
+
     } catch (error) {
       console.error('Error al procesar la respuesta de Gemini:', error);
-      
-      // Extracción manual de datos cuando falla el formato JSON
+      // fallback ya existente permanece igual
       try {
         const textoGenerado = respuesta.candidates[0].content.parts[0].text;
-        
-        // Extraer resumen (buscando patrones comunes)
         let resumen = "";
         const resumenMatch = textoGenerado.match(/(?:Resumen|Summary|Perfil)(?:\s*profesional)?:\s*([\s\S]*?)(?:\n\n|\n(?=[A-Z]))/i);
         if (resumenMatch && resumenMatch[1]) {
           resumen = resumenMatch[1].trim();
         } else {
-          // Tomar los primeros párrafos como resumen
           const parrafos = textoGenerado.split('\n\n');
-          if (parrafos.length > 0) {
-            resumen = parrafos[0].trim();
-          }
+          if (parrafos.length > 0) resumen = parrafos[0].trim();
         }
-        
         if (resumen) {
           document.getElementById('ai-summary').textContent = resumen;
           formData.aiSummary = resumen;
-        } else {
-          // Resumen de respaldo
-          const fallbackSummary = `Profesional con experiencia en ${formData.skills.slice(0, 3).join(', ')}. Con formación en ${formData.education[0]?.degree || 'educación superior'} y trayectoria en ${formData.experience[0]?.position || 'roles profesionales'}.`;
-          document.getElementById('ai-summary').textContent = fallbackSummary;
-          formData.aiSummary = fallbackSummary;
         }
       } catch (extractionError) {
-        console.error('Error en la extracción manual:', extractionError);
-        
-        // Utilizar un resumen genérico como último recurso
-        const fallbackSummary = `Profesional con experiencia en ${formData.skills.slice(0, 3).join(', ')}. Con formación en ${formData.education[0]?.degree || 'educación superior'} y trayectoria en ${formData.experience[0]?.position || 'roles profesionales'}.`;
+        const fallbackSummary = `Profesional con experiencia en ${formData.skills.slice(0, 3).join(', ')}.`;
         document.getElementById('ai-summary').textContent = fallbackSummary;
         formData.aiSummary = fallbackSummary;
       }
     }
-  }
+}
 
 // Estilos de dos columnas aplicables en preview/export
 const twoColumnStyles = new Set(['ejecutivo', 'tecnologico']);
@@ -661,7 +653,6 @@ function adjustPreviewLayout() {
 previewBtn.addEventListener('click', () => {
   // Navegar a la sección de previsualización
   sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
-  // En móvil, forzar posición y actualizar barra de progreso
   setTimeout(() => {
     window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
     steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
@@ -669,7 +660,8 @@ previewBtn.addEventListener('click', () => {
   }, 200);
   
   // Llenar la vista previa con los datos
-  document.getElementById('preview-name').textContent = formData.name;
+  const headline = formData.aiHeadline ? `${formData.aiHeadline} — ` : '';
+  document.getElementById('preview-name').textContent = headline + formData.name;
   document.getElementById('preview-email').textContent = formData.email;
   document.getElementById('preview-phone').textContent = formData.phone;
   document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
@@ -680,12 +672,13 @@ previewBtn.addEventListener('click', () => {
   formData.experience.forEach(exp => {
     const expItem = document.createElement('div');
     expItem.classList.add('experience-item');
+    const descHtml = (exp.description || '').split('\n').map(line => `<li>${line.replace(/^•\s?/, '')}</li>`).join('');
     expItem.innerHTML = `
       <div class="exp-header">
         <h5>${exp.position}</h5>
         <p>${exp.company} | ${exp.duration}</p>
       </div>
-      <p>${exp.description}</p>
+      ${descHtml ? `<ul>${descHtml}</ul>` : ''}
     `;
     experienceContainer.appendChild(expItem);
   });
@@ -716,9 +709,7 @@ previewBtn.addEventListener('click', () => {
   // Ajustar layout visual
   adjustPreviewLayout();
   
-  // Esperar a que se cargue la vista previa antes de añadir los botones
   setTimeout(() => {
-    // Agregar botones de compartir y exportar HTML
     addSharingButtons();
     addExportToHTMLButton();
   }, 500);
