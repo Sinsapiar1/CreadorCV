@@ -773,6 +773,15 @@ downloadPDFBtn.addEventListener('click', () => {
       const contactWidth = doc.getStringUnitWidth(contactInfo) * style.contactFont.size / doc.internal.scaleFactor;
       const contactX = style.centered ? (210 - contactWidth) / 2 : style.margin;
       doc.text(contactInfo, contactX, style.contactPositionY);
+
+      // Añadir foto si existe
+      if (photoDataUrl) {
+        const type = photoDataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+        const imgW = 24, imgH = 24;
+        const imgX = 210 - style.margin - imgW;
+        const imgY = Math.max(10, style.namePositionY - 8);
+        try { doc.addImage(photoDataUrl, type, imgX, imgY, imgW, imgH); } catch (e) { console.warn('No se pudo insertar la imagen en PDF:', e); }
+      }
       
       // Variable para la posición Y actual
       let currentY = style.firstSectionY;
@@ -1610,7 +1619,7 @@ downloadDOCXBtn.addEventListener('click', () => {
       // Crear el documento con todos los elementos y estilos
       const doc = new docx.Document({
         styles: {
-          paragraphStyles: styleConfig.paragraphStyles
+          paragraphStyles: styleConfig.paragraphStyles || []
         },
         sections: [{
           properties: {
@@ -3578,6 +3587,7 @@ function exportToHTML() {
   };
 
   const css = cssByStyle[selectedStyle] || cssByStyle['profesional'];
+  const isTwoCol = selectedStyle === 'moderno' || selectedStyle === 'ejecutivo' || selectedStyle === 'tecnologico';
 
   // Construcción del HTML
   const escape = (s) => (s || '').toString();
@@ -3594,7 +3604,16 @@ function exportToHTML() {
     </div>`).join('');
   const skills = formData.skills.map(s => `<span class="skill">${escape(s)}</span>`).join('');
   
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escape(formData.name)} - CV</title><style>${css} @media print { @page { size: A4; margin: 16mm; } .page{max-width: none; padding: 0;} }</style></head><body><div class="page"><div class="name">${escape(formData.name)}</div><div class="contact">${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class="skills">${skills}</div></section></div></body></html>`;
+  let bodyHtml = '';
+  if (isTwoCol) {
+    // Sidebar con Contacto/Educación/Habilidades
+    const sidePhoto = photoDataUrl ? `<img class=\"photo\" src=\"${photoDataUrl}\"/>` : '';
+    bodyHtml = `<div class=\"page\"><aside class=\"sidebar\">${sidePhoto}<section><h2>CONTACTO</h2><div>${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div></section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></aside><main><div class=\"name\">${escape(formData.name)}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section></main></div>`;
+  } else {
+    const inlinePhoto = photoDataUrl ? `<img class=\"photo\" src=\"${photoDataUrl}\" style=\"float:right;margin-left:12px;width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;\"/>` : '';
+    bodyHtml = `<div class=\"page\">${inlinePhoto}<div class=\"name\">${escape(formData.name)}</div><div class=\"contact\">${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></div>`;
+  }
+  const html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>${escape(formData.name)} - CV</title><style>${css} @media print { @page { size: A4; margin: 16mm; } .page{max-width: none; padding: 0;} }</style></head><body>${bodyHtml}</body></html>`;
 
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
   saveAs(blob, `${(formData.name || 'CV').replace(/\s+/g, '_')}_CV.html`);
