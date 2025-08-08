@@ -3644,9 +3644,19 @@ function exportToHTML() {
   // Construcción del HTML
   const escape = (s) => (s || '').toString();
   const expItems = formData.experience.map(exp => {
-    const bullets = (exp.description || '').split('\n').filter(Boolean).map(b => `<li>${escape(b.replace(/^•\s?/, ''))}</li>`).join('');
-    return `
-    <div class=\"item\">\n      <h3>${escape(exp.position)}</h3>\n      <div class=\"muted\">${escape(exp.company)} | ${escape(exp.duration)}</div>\n      ${bullets ? `<ul>${bullets}</ul>` : ''}\n    </div>`;
+    const bullets = (exp.description || '')
+      .split('\n')
+      .filter(Boolean)
+      .map(b => '<li>' + escape(b.replace(/^•\s?/, '')) + '</li>')
+      .join('');
+    const bulletsHtml = bullets ? '<ul>' + bullets + '</ul>' : '';
+    return (
+      '<div class="item">\n' +
+      '  <h3>' + escape(exp.position) + '</h3>\n' +
+      '  <div class="muted">' + escape(exp.company) + ' | ' + escape(exp.duration) + '</div>\n' +
+      '  ' + bulletsHtml + '\n' +
+      '</div>'
+    );
   }).join('');
   const eduItems = formData.education.map(edu => `
     <div class="item">
