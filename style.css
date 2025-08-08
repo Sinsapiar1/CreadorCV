@@ -1086,3 +1086,63 @@ body.dark-mode .form-subgroup {
   height: 100vh; /* Altura completa */
   scroll-behavior: smooth; /* Desplazamiento suave */
 }
+
+/* Configuración de API */
+.api-key-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+}
+.api-key-container h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.api-key-container label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.api-key-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+}
+.api-key-container input#gemini-api-key {
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.api-key-container .icon-btn {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+}
+.api-key-note {
+  display: block;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+@media screen and (max-width: 600px) {
+  .api-key-row { grid-template-columns: 1fr auto; }
+}
+
+/* Botón HTML */
+.download-btn.html {
+  background: #2980b9;
+  color: #fff;
+}
+.download-btn.html:hover {
+  background: #1f6da0;
+}
+
+/* Modo oscuro para el bloque de API */
+body.dark-mode .api-key-container {
+  background: #2a2a3c;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+body.dark-mode .api-key-note { color: #aaa; }

@@ -6,7 +6,6 @@
   <title>Generador de CV con IA</title>
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
   <!-- Barra de progreso -->
@@ -90,6 +89,16 @@
         <p>Formato tradicional para entornos educativos</p>
       </div>
     </div>
+  </div>
+  <div class="api-key-container">
+    <h3>Configurar IA</h3>
+    <label for="gemini-api-key">Clave API de Gemini</label>
+    <div class="api-key-row">
+      <input type="password" id="gemini-api-key" placeholder="Ingresa tu clave API" autocomplete="off" />
+      <button id="toggle-api-visibility" class="icon-btn" type="button" title="Mostrar/Ocultar"><i class="fa fa-eye"></i></button>
+      <button id="save-api-key" class="next-section-btn" type="button">Guardar clave</button>
+    </div>
+    <small class="api-key-note">Tu clave se guarda solo en este navegador (localStorage) y se usa directamente contra la API de Google. No se envía a nuestros servidores.</small>
   </div>
     </section>
 
