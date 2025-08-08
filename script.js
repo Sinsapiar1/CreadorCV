@@ -555,9 +555,23 @@ function procesarRespuestaGemini(respuesta) {
         throw new Error('No se encontró formato JSON');
       }
 
+      // Helper: normaliza texto libre a líneas con viñetas
+      const normalizeToBulletedLines = (txt) => {
+        if (!txt) return '';
+        // separar por saltos de línea o marcadores comunes
+        const parts = txt
+          .split(/\n+|\r+|\u2022|•|\-|\;|\.|\s{2,}/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        // si al menos 2 ítems, crear líneas con viñetas
+        if (parts.length >= 2) {
+          return parts.map(p => `• ${p}`).join('\n');
+        }
+        return txt.trim();
+      };
+
       // Titular
       if (datosJSON.titular) {
-        // Lo mostramos encima del nombre en preview-summary como prefijo
         const summaryEl = document.getElementById('ai-summary');
         const titular = datosJSON.titular;
         if (summaryEl) {
@@ -577,9 +591,11 @@ function procesarRespuestaGemini(respuesta) {
         datosJSON.experienciasMejoradas.forEach(mej => {
           const idx = mej.indice;
           if (formData.experience[idx]) {
-            // Construir texto con bullets si vienen
+            // Preferir bullets si vienen
             if (Array.isArray(mej.bullets) && mej.bullets.length) {
               formData.experience[idx].description = mej.bullets.map(b => `• ${b}`).join('\n');
+            } else if (mej.descripcionMejorada) {
+              formData.experience[idx].description = normalizeToBulletedLines(mej.descripcionMejorada);
             }
             if (mej.titulo) formData.experience[idx].position = mej.titulo;
             if (mej.empresa) formData.experience[idx].company = mej.empresa;
@@ -602,7 +618,6 @@ function procesarRespuestaGemini(respuesta) {
 
     } catch (error) {
       console.error('Error al procesar la respuesta de Gemini:', error);
-      // fallback ya existente permanece igual
       try {
         const textoGenerado = respuesta.candidates[0].content.parts[0].text;
         let resumen = "";
