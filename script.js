@@ -659,23 +659,21 @@ function adjustPreviewLayout() {
   }
 }
 
-// Previsualizar CV
+// Previsualizar CV (único handler)
 previewBtn.addEventListener('click', () => {
-  // Navegar a la sección de previsualización
-  sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
+  sections[3].scrollIntoView({ behavior: 'smooth', block: 'start' });
   setTimeout(() => {
     window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
     steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
     applyTheme(3);
-  }, 200);
-  
-  // Llenar la vista previa con los datos
+  }, 150);
+
   const headline = formData.aiHeadline ? `${formData.aiHeadline} — ` : '';
   document.getElementById('preview-name').textContent = headline + formData.name;
   document.getElementById('preview-email').textContent = formData.email;
   document.getElementById('preview-phone').textContent = formData.phone;
-  document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
-  
+  document.getElementById('preview-summary').textContent = formData.aiSummary || document.getElementById('ai-summary').textContent;
+
   // Foto
   const previewPhoto = document.getElementById('preview-photo');
   if (previewPhoto) {
@@ -686,14 +684,14 @@ previewBtn.addEventListener('click', () => {
       previewPhoto.style.display = 'none';
     }
   }
-  
-  // Experiencia
+
+  // Experiencia (como bullets si hay)
   const experienceContainer = document.getElementById('preview-experience');
   experienceContainer.innerHTML = '';
   formData.experience.forEach(exp => {
     const expItem = document.createElement('div');
     expItem.classList.add('experience-item');
-    const descHtml = (exp.description || '').split('\n').map(line => `<li>${line.replace(/^•\s?/, '')}</li>`).join('');
+    const descHtml = (exp.description || '').split('\n').filter(Boolean).map(line => `<li>${line.replace(/^•\s?/, '')}</li>`).join('');
     expItem.innerHTML = `
       <div class="exp-header">
         <h5>${exp.position}</h5>
@@ -703,7 +701,7 @@ previewBtn.addEventListener('click', () => {
     `;
     experienceContainer.appendChild(expItem);
   });
-  
+
   // Educación
   const educationContainer = document.getElementById('preview-education');
   educationContainer.innerHTML = '';
@@ -716,7 +714,7 @@ previewBtn.addEventListener('click', () => {
     `;
     educationContainer.appendChild(eduItem);
   });
-  
+
   // Habilidades
   const skillsContainer = document.getElementById('preview-skills');
   skillsContainer.innerHTML = '';
@@ -727,13 +725,8 @@ previewBtn.addEventListener('click', () => {
     skillsContainer.appendChild(skillTag);
   });
 
-  // Ajustar layout visual
   adjustPreviewLayout();
-  
-  setTimeout(() => {
-    addSharingButtons();
-    addExportToHTMLButton();
-  }, 500);
+  setTimeout(() => { addSharingButtons(); addExportToHTMLButton(); }, 300);
 });
 
 // Simulación de descarga del CV
@@ -2713,83 +2706,7 @@ function addExportToHTMLButton() {
   }
 }
 
-// Modifica previewBtn para que limpie los botones anteriores si es necesario
-previewBtn.addEventListener('click', () => {
-  // Navegar a la sección de previsualización
-  sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
-  // En móvil, forzar posición y actualizar barra de progreso
-  setTimeout(() => {
-    window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
-    steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
-    applyTheme(3);
-  }, 200);
-  
-  // Llenar la vista previa con los datos
-  document.getElementById('preview-name').textContent = formData.name;
-  document.getElementById('preview-email').textContent = formData.email;
-  document.getElementById('preview-phone').textContent = formData.phone;
-  document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
-  
-  // Foto
-  const previewPhoto = document.getElementById('preview-photo');
-  if (previewPhoto) {
-    if (avatarDataUrl) {
-      previewPhoto.src = avatarDataUrl;
-      previewPhoto.style.display = 'block';
-    } else {
-      previewPhoto.style.display = 'none';
-    }
-  }
-  
-  // Experiencia
-  const experienceContainer = document.getElementById('preview-experience');
-  experienceContainer.innerHTML = '';
-  formData.experience.forEach(exp => {
-    const expItem = document.createElement('div');
-    expItem.classList.add('experience-item');
-    expItem.innerHTML = `
-      <div class="exp-header">
-        <h5>${exp.position}</h5>
-        <p>${exp.company} | ${exp.duration}</p>
-      </div>
-      <p>${exp.description}</p>
-    `;
-    experienceContainer.appendChild(expItem);
-  });
-  
-  // Educación
-  const educationContainer = document.getElementById('preview-education');
-  educationContainer.innerHTML = '';
-  formData.education.forEach(edu => {
-    const eduItem = document.createElement('div');
-    eduItem.classList.add('education-item');
-    eduItem.innerHTML = `
-      <h5>${edu.degree}</h5>
-      <p>${edu.institution} | ${edu.year}</p>
-    `;
-    educationContainer.appendChild(eduItem);
-  });
-  
-  // Habilidades
-  const skillsContainer = document.getElementById('preview-skills');
-  skillsContainer.innerHTML = '';
-  formData.skills.forEach(skill => {
-    const skillTag = document.createElement('span');
-    skillTag.classList.add('skill-tag');
-    skillTag.textContent = skill;
-    skillsContainer.appendChild(skillTag);
-  });
-  
-  // Ajustar layout visual
-  adjustPreviewLayout();
-  
-  // Esperar a que se cargue la vista previa antes de añadir los botones
-  setTimeout(() => {
-    // Agregar botones de compartir y exportar HTML
-    addSharingButtons();
-    addExportToHTMLButton();
-  }, 500);
-});
+
 
 
 // Añade estas funciones a tu script.js para implementar mejoras de IA
