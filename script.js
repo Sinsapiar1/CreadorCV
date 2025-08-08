@@ -470,38 +470,47 @@ function crearPromptParaGemini(datos, tipoCV) {
   
   Instrucciones:
   ${instruccionesEspecificas}
+  Mejora TODAS las secciones (titular profesional, resumen, experiencias con bullets accionables y cuantificados, reordenamiento/categorización de habilidades) con tono humano y profesional.
   
   GENERA SÓLO UN OBJETO JSON VÁLIDO con la siguiente estructura exacta (sin texto adicional antes o después):
-  
   {
-    "resumen": "Escribe aquí un resumen profesional impactante de 3-4 líneas que destaque las fortalezas y experiencia del candidato",
+    "titular": "Ej. Desarrollador Full Stack | React + Node.js",
+    "resumen": "Resumen profesional de 3-4 líneas con impacto",
     "experienciasMejoradas": [
       {
         "indice": 0,
-        "descripcionMejorada": "Escribe aquí la primera experiencia mejorada"
-      },
-      {
-        "indice": 1,
-        "descripcionMejorada": "Escribe aquí la segunda experiencia mejorada"
+        "titulo": "Puesto mejorado",
+        "empresa": "Empresa",
+        "periodo": "AAAA-AAAA",
+        "bullets": ["Logro/acción cuantificado 1", "Logro/acción 2", "Logro/acción 3"],
+        "tecnologias": ["React", "Node", "AWS"]
       }
     ],
-    "habilidadesOrdenadas": ["Habilidad1", "Habilidad2", "Habilidad3"]
+    "habilidadesOrdenadas": {
+      "tecnicas": ["Tech1", "Tech2"],
+      "blandas": ["Comunicación", "Liderazgo"],
+      "herramientas": ["Jira", "Git"],
+      "idiomas": ["Inglés B2"]
+    }
   }
   
   IMPORTANTE: 
   1. Asegúrate de que tu respuesta sea SOLAMENTE el objeto JSON válido.
-  2. No incluyas comillas triples, ni la palabra 'json' u otros marcadores antes o después del JSON.
+  2. No incluyas comillas triples ni etiquetas.
   3. El JSON debe tener exactamente la estructura mostrada arriba.
-  4. Incluye solo tantos objetos en "experienciasMejoradas" como existan en los datos originales.
-  5. Usa sólo las habilidades originales en "habilidadesOrdenadas", ordenadas por relevancia.`;
+  4. Incluye tantos objetos en "experienciasMejoradas" como existan en los datos originales (mantén el campo indice).
+  5. Usa sólo las habilidades originales (y añade categorías) en "habilidadesOrdenadas".`;
   }
   
-  // Función para llamar a la API de Gemini
-  async function llamarGeminiAPI(prompt) {
-    // Reemplaza 'TU_API_KEY' con tu clave API real de Gemini
-    const API_KEY = 'AIzaSyD3LUr6ntBBvi54YpPeMjjnAz9pr94u0IM';
+  // Función para llamar a la API de Gemini (legacy, reemplazada más abajo)
+  async function llamarGeminiAPI_legacy(prompt) {
     const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-    
+    const API_KEY = (typeof localStorage !== 'undefined' && localStorage.getItem('geminiApiKey')) || '';
+
+    if (!API_KEY) {
+      throw new Error('Falta la clave API de Gemini. Configúrala en la sección 1.');
+    }
+
     const datos = {
       contents: [
         {
@@ -533,113 +542,140 @@ function crearPromptParaGemini(datos, tipoCV) {
  // Función mejorada para procesar la respuesta de Gemini
 function procesarRespuestaGemini(respuesta) {
     try {
-      // Extraer el texto generado por la IA
       const textoGenerado = respuesta.candidates[0].content.parts[0].text;
-      console.log("Respuesta de Gemini:", textoGenerado);
-      
       let datosJSON;
-      
-      // Intentar encontrar y extraer un JSON válido de la respuesta
-      // Buscar contenido entre llaves {} que podría ser JSON
       const jsonMatch = textoGenerado.match(/\{[\s\S]*\}/);
-      
       if (jsonMatch) {
         try {
-          // Intentar analizar el JSON encontrado
           datosJSON = JSON.parse(jsonMatch[0]);
-          console.log("JSON extraído con éxito:", datosJSON);
         } catch (jsonError) {
-          console.error("Error al analizar el JSON extraído:", jsonError);
-          // Continuar con el flujo alternativo
-          throw new Error("No se pudo analizar el JSON");
+          throw new Error('No se pudo analizar el JSON');
         }
       } else {
-        // Si no se encuentra un formato JSON, extraer información mediante análisis de texto
-        console.log("No se encontró formato JSON, procesando como texto plano");
-        throw new Error("No se encontró formato JSON");
+        throw new Error('No se encontró formato JSON');
       }
-      
-      // Si llegamos aquí, tenemos un JSON válido
-      // Actualizar el resumen en la interfaz
+
+      // Titular
+      if (datosJSON.titular) {
+        // Lo mostramos encima del nombre en preview-summary como prefijo
+        const summaryEl = document.getElementById('ai-summary');
+        const titular = datosJSON.titular;
+        if (summaryEl) {
+          summaryEl.dataset.titular = titular;
+        }
+        formData.aiHeadline = titular;
+      }
+
+      // Resumen
       if (datosJSON.resumen) {
         document.getElementById('ai-summary').textContent = datosJSON.resumen;
         formData.aiSummary = datosJSON.resumen;
-      } else {
-        // Buscar otras posibles claves para el resumen
-        const posiblesClaves = ['resumen', 'summary', 'profesionalSummary', 'perfil', 'profile'];
-        for (const clave of posiblesClaves) {
-          if (datosJSON[clave]) {
-            document.getElementById('ai-summary').textContent = datosJSON[clave];
-            formData.aiSummary = datosJSON[clave];
-            break;
-          }
-        }
       }
-      
-      // Mejorar las descripciones de experiencia si están disponibles
-      if (datosJSON.experienciasMejoradas) {
-        datosJSON.experienciasMejoradas.forEach(mejora => {
-          if (formData.experience[mejora.indice]) {
-            formData.experience[mejora.indice].description = mejora.descripcionMejorada;
+
+      // Experiencias mejoradas
+      if (Array.isArray(datosJSON.experienciasMejoradas)) {
+        datosJSON.experienciasMejoradas.forEach(mej => {
+          const idx = mej.indice;
+          if (formData.experience[idx]) {
+            // Construir texto con bullets si vienen
+            if (Array.isArray(mej.bullets) && mej.bullets.length) {
+              formData.experience[idx].description = mej.bullets.map(b => `• ${b}`).join('\n');
+            }
+            if (mej.titulo) formData.experience[idx].position = mej.titulo;
+            if (mej.empresa) formData.experience[idx].company = mej.empresa;
+            if (mej.periodo) formData.experience[idx].duration = mej.periodo;
+            if (Array.isArray(mej.tecnologias)) formData.experience[idx].tech = mej.tecnologias;
           }
         });
       }
-      
-      // Actualizar el orden de las habilidades si están disponibles
-      if (datosJSON.habilidadesOrdenadas) {
-        formData.skills = datosJSON.habilidadesOrdenadas;
+
+      // Habilidades categorizadas
+      if (datosJSON.habilidadesOrdenadas && typeof datosJSON.habilidadesOrdenadas === 'object') {
+        const cats = datosJSON.habilidadesOrdenadas;
+        const flat = ['tecnicas','blandas','herramientas','idiomas']
+          .filter(k => Array.isArray(cats[k]))
+          .map(k => cats[k])
+          .flat();
+        if (flat.length) formData.skills = flat;
+        formData.skillsCategorized = cats;
       }
-      
+
     } catch (error) {
       console.error('Error al procesar la respuesta de Gemini:', error);
-      
-      // Extracción manual de datos cuando falla el formato JSON
+      // fallback ya existente permanece igual
       try {
         const textoGenerado = respuesta.candidates[0].content.parts[0].text;
-        
-        // Extraer resumen (buscando patrones comunes)
         let resumen = "";
         const resumenMatch = textoGenerado.match(/(?:Resumen|Summary|Perfil)(?:\s*profesional)?:\s*([\s\S]*?)(?:\n\n|\n(?=[A-Z]))/i);
         if (resumenMatch && resumenMatch[1]) {
           resumen = resumenMatch[1].trim();
         } else {
-          // Tomar los primeros párrafos como resumen
           const parrafos = textoGenerado.split('\n\n');
-          if (parrafos.length > 0) {
-            resumen = parrafos[0].trim();
-          }
+          if (parrafos.length > 0) resumen = parrafos[0].trim();
         }
-        
         if (resumen) {
           document.getElementById('ai-summary').textContent = resumen;
           formData.aiSummary = resumen;
-        } else {
-          // Resumen de respaldo
-          const fallbackSummary = `Profesional con experiencia en ${formData.skills.slice(0, 3).join(', ')}. Con formación en ${formData.education[0]?.degree || 'educación superior'} y trayectoria en ${formData.experience[0]?.position || 'roles profesionales'}.`;
-          document.getElementById('ai-summary').textContent = fallbackSummary;
-          formData.aiSummary = fallbackSummary;
         }
       } catch (extractionError) {
-        console.error('Error en la extracción manual:', extractionError);
-        
-        // Utilizar un resumen genérico como último recurso
-        const fallbackSummary = `Profesional con experiencia en ${formData.skills.slice(0, 3).join(', ')}. Con formación en ${formData.education[0]?.degree || 'educación superior'} y trayectoria en ${formData.experience[0]?.position || 'roles profesionales'}.`;
+        const fallbackSummary = `Profesional con experiencia en ${formData.skills.slice(0, 3).join(', ')}.`;
         document.getElementById('ai-summary').textContent = fallbackSummary;
         formData.aiSummary = fallbackSummary;
       }
     }
+}
+
+// Estilos de dos columnas aplicables en preview/export
+const twoColumnStyles = new Set(['ejecutivo', 'tecnologico']);
+
+function adjustPreviewLayout() {
+  const preview = document.getElementById('cv-preview');
+  if (!preview) return;
+  if (twoColumnStyles.has(selectedStyle)) {
+    preview.classList.add('two-col');
+    // Crear contenedor sidebar si no existe
+    if (!preview.querySelector('.cv-sidebar')) {
+      const sidebar = document.createElement('div');
+      sidebar.className = 'cv-sidebar';
+      const summary = preview.querySelector('.cv-summary');
+      preview.insertBefore(sidebar, summary);
+      const edu = preview.querySelector('.cv-education');
+      const skills = preview.querySelector('.cv-skills');
+      if (edu) sidebar.appendChild(edu);
+      if (skills) sidebar.appendChild(skills);
+    }
+  } else {
+    preview.classList.remove('two-col');
   }
+}
 
 // Previsualizar CV
 previewBtn.addEventListener('click', () => {
   // Navegar a la sección de previsualización
-  sections[3].scrollIntoView({ behavior: "smooth" });
+  sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
+  setTimeout(() => {
+    window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
+    steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
+    applyTheme(3);
+  }, 200);
   
   // Llenar la vista previa con los datos
-  document.getElementById('preview-name').textContent = formData.name;
+  const headline = formData.aiHeadline ? `${formData.aiHeadline} — ` : '';
+  document.getElementById('preview-name').textContent = headline + formData.name;
   document.getElementById('preview-email').textContent = formData.email;
   document.getElementById('preview-phone').textContent = formData.phone;
   document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
+  
+  // Foto
+  const previewPhoto = document.getElementById('preview-photo');
+  if (previewPhoto) {
+    if (avatarDataUrl) {
+      previewPhoto.src = avatarDataUrl;
+      previewPhoto.style.display = 'block';
+    } else {
+      previewPhoto.style.display = 'none';
+    }
+  }
   
   // Experiencia
   const experienceContainer = document.getElementById('preview-experience');
@@ -647,12 +683,13 @@ previewBtn.addEventListener('click', () => {
   formData.experience.forEach(exp => {
     const expItem = document.createElement('div');
     expItem.classList.add('experience-item');
+    const descHtml = (exp.description || '').split('\n').map(line => `<li>${line.replace(/^•\s?/, '')}</li>`).join('');
     expItem.innerHTML = `
       <div class="exp-header">
         <h5>${exp.position}</h5>
         <p>${exp.company} | ${exp.duration}</p>
       </div>
-      <p>${exp.description}</p>
+      ${descHtml ? `<ul>${descHtml}</ul>` : ''}
     `;
     experienceContainer.appendChild(expItem);
   });
@@ -679,6 +716,14 @@ previewBtn.addEventListener('click', () => {
     skillTag.textContent = skill;
     skillsContainer.appendChild(skillTag);
   });
+
+  // Ajustar layout visual
+  adjustPreviewLayout();
+  
+  setTimeout(() => {
+    addSharingButtons();
+    addExportToHTMLButton();
+  }, 500);
 });
 
 // Simulación de descarga del CV
@@ -736,6 +781,15 @@ downloadPDFBtn.addEventListener('click', () => {
       const contactWidth = doc.getStringUnitWidth(contactInfo) * style.contactFont.size / doc.internal.scaleFactor;
       const contactX = style.centered ? (210 - contactWidth) / 2 : style.margin;
       doc.text(contactInfo, contactX, style.contactPositionY);
+
+      // Añadir foto si existe
+      if (avatarDataUrl) {
+        const type = 'PNG';
+        const imgW = 22, imgH = 22; // miniatura uniforme
+        const imgX = 210 - style.margin - imgW;
+        const imgY = Math.max(8, style.namePositionY - 10);
+        try { doc.addImage(avatarDataUrl, type, imgX, imgY, imgW, imgH); } catch (e) { console.warn('No se pudo insertar la imagen en PDF:', e); }
+      }
       
       // Variable para la posición Y actual
       let currentY = style.firstSectionY;
@@ -834,44 +888,25 @@ downloadPDFBtn.addEventListener('click', () => {
       });
       
       // Añadir habilidades
-      currentY = addSection('HABILIDADES', currentY);
-      currentY += style.itemSpacing;
-      
-      // Implementar lista de habilidades según el estilo
-      if (style.skillsStyle === 'bullets') {
-        // Estilo con viñetas
-        formData.skills.forEach(skill => {
-          const bulletY = currentY;
-          
-          // Dibujar viñeta
-          if (style.bullet.type === 'circle') {
+      if (style.layout !== 'two-column') {
+        currentY = addSection('HABILIDADES', currentY);
+        currentY += style.itemSpacing;
+        if (style.skillsStyle === 'bullets') {
+          formData.skills.forEach(skill => {
+            const bulletY = currentY;
             doc.setDrawColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
             doc.setFillColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
             doc.circle(style.margin + 2, bulletY - 1.5, 1.5, 'F');
-          } else if (style.bullet.type === 'square') {
-            doc.setDrawColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
-            doc.setFillColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
-            doc.rect(style.margin, bulletY - 3, 3, 3, 'F');
-          } else {
-            // Viñeta de texto
             doc.setFont(style.textFont.name, style.textFont.style);
             doc.setFontSize(style.textFont.size);
-            doc.setTextColor(style.bullet.color.r, style.bullet.color.g, style.bullet.color.b);
-            doc.text('•', style.margin, bulletY);
-          }
-          
-          // Añadir texto de la habilidad
-          doc.setFont(style.textFont.name, style.textFont.style);
-          doc.setFontSize(style.textFont.size);
-          doc.setTextColor(style.textFont.color.r, style.textFont.color.g, style.textFont.color.b);
-          doc.text(skill, style.margin + style.bullet.spacing, bulletY);
-          
-          currentY += style.bullet.lineHeight;
-        });
-      } else {
-        // Estilo en línea
-        const habilidadesText = formData.skills.join(', ');
-        currentY = addParagraph(habilidadesText, style.margin, currentY);
+            doc.setTextColor(style.textFont.color.r, style.textFont.color.g, style.textFont.color.b);
+            doc.text(skill, style.margin + style.bullet.spacing, bulletY);
+            currentY += style.bullet.lineHeight;
+          });
+        } else {
+          const habilidadesText = formData.skills.join(', ');
+          currentY = addParagraph(habilidadesText, style.margin, currentY);
+        }
       }
       
       // Guardar y descargar el PDF
@@ -1380,7 +1415,16 @@ downloadPDFBtn.addEventListener('click', () => {
 
     // Reemplaza tu función de generación de DOCX con esta versión que incluye múltiples estilos
 
-downloadDOCXBtn.addEventListener('click', () => {
+function dataURLToArrayBuffer(dataURL) {
+  const base64 = dataURL.split(',')[1];
+  const binary = atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+downloadDOCXBtn.addEventListener('click', async () => {
     // Mostrar mensaje de carga
     const mensaje = document.createElement('div');
     mensaje.textContent = 'Generando DOCX...';
@@ -1398,6 +1442,7 @@ downloadDOCXBtn.addEventListener('click', () => {
     try {
       // Obtener la configuración de estilo para DOCX
       const styleConfig = getDOCXStyleConfig(selectedStyle);
+      styleConfig.twoColumn = ['ejecutivo','tecnologico','moderno'].includes(selectedStyle);
    
       // Array para almacenar todos los elementos del documento
       const documentElements = [];
@@ -1407,16 +1452,31 @@ downloadDOCXBtn.addEventListener('click', () => {
         documentElements.push(...styleConfig.headerElements);
       }
       
+      // Foto (si existe)
+      let imageRun = null;
+      if (typeof docx !== 'undefined' && avatarDataUrl) {
+        try {
+          const arrayBuffer = dataURLToArrayBuffer(avatarDataUrl);
+          if (docx.ImageRun) {
+            imageRun = new docx.ImageRun({ data: arrayBuffer, transformation: { width: 64, height: 64 } });
+          }
+        } catch (e) { console.warn('No se pudo insertar imagen en DOCX', e); }
+      }
+      
       // 1. Encabezado con nombre y datos de contacto
+      const nameLine = (formData.aiHeadline ? formData.aiHeadline + ' — ' : '') + formData.name;
       documentElements.push(
         new docx.Paragraph({
-          text: formData.name,
+          text: nameLine,
           heading: docx.HeadingLevel.HEADING_1,
           alignment: styleConfig.nameAlignment,
           spacing: { after: styleConfig.nameSpacingAfter },
           color: styleConfig.nameColor
         })
       );
+      if (imageRun) {
+        documentElements.push(new docx.Paragraph(imageRun));
+      }
       
       documentElements.push(
         new docx.Paragraph({
@@ -1499,13 +1559,16 @@ downloadDOCXBtn.addEventListener('click', () => {
           })
         );
         
-        documentElements.push(
-          new docx.Paragraph({
-            text: exp.description,
-            spacing: { after: styleConfig.paragraphSpacingAfter },
-            ...styleConfig.paragraphStyle
-          })
-        );
+        // Bullets mejorados si existen
+        if (exp.description && exp.description.includes('\n')) {
+          exp.description.split('\n').forEach(line => {
+            const clean = line.replace(/^•\s?/, '').trim();
+            if (!clean) return;
+            documentElements.push(new docx.Paragraph({ text: clean, bullet: { level: 0 }, ...styleConfig.paragraphStyle }));
+          });
+        } else if (exp.description) {
+          documentElements.push(new docx.Paragraph({ text: exp.description, spacing: { after: styleConfig.paragraphSpacingAfter }, ...styleConfig.paragraphStyle }));
+        }
       });
       
       // 5. Educación
@@ -1591,7 +1654,7 @@ downloadDOCXBtn.addEventListener('click', () => {
       // Crear el documento con todos los elementos y estilos
       const doc = new docx.Document({
         styles: {
-          paragraphStyles: styleConfig.paragraphStyles
+          paragraphStyles: styleConfig.paragraphStyles || []
         },
         sections: [{
           properties: {
@@ -1601,7 +1664,8 @@ downloadDOCXBtn.addEventListener('click', () => {
                 right: styleConfig.margins.right,
                 bottom: styleConfig.margins.bottom,
                 left: styleConfig.margins.left
-              }
+              },
+              columns: styleConfig.twoColumn ? { count: 2, space: 708 } : undefined
             }
           },
           children: documentElements
@@ -2642,13 +2706,30 @@ function addExportToHTMLButton() {
 // Modifica previewBtn para que limpie los botones anteriores si es necesario
 previewBtn.addEventListener('click', () => {
   // Navegar a la sección de previsualización
-  sections[3].scrollIntoView({ behavior: "smooth" });
+  sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
+  // En móvil, forzar posición y actualizar barra de progreso
+  setTimeout(() => {
+    window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
+    steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
+    applyTheme(3);
+  }, 200);
   
   // Llenar la vista previa con los datos
   document.getElementById('preview-name').textContent = formData.name;
   document.getElementById('preview-email').textContent = formData.email;
   document.getElementById('preview-phone').textContent = formData.phone;
   document.getElementById('preview-summary').textContent = document.getElementById('ai-summary').textContent;
+  
+  // Foto
+  const previewPhoto = document.getElementById('preview-photo');
+  if (previewPhoto) {
+    if (avatarDataUrl) {
+      previewPhoto.src = avatarDataUrl;
+      previewPhoto.style.display = 'block';
+    } else {
+      previewPhoto.style.display = 'none';
+    }
+  }
   
   // Experiencia
   const experienceContainer = document.getElementById('preview-experience');
@@ -2688,6 +2769,9 @@ previewBtn.addEventListener('click', () => {
     skillTag.textContent = skill;
     skillsContainer.appendChild(skillTag);
   });
+  
+  // Ajustar layout visual
+  adjustPreviewLayout();
   
   // Esperar a que se cargue la vista previa antes de añadir los botones
   setTimeout(() => {
@@ -2732,11 +2816,18 @@ const keywordsBySector = {
   ]
 };
 
+// Mapeo de tipos de CV (UI) a sectores para análisis de palabras clave
+function mapCVTypeToSector(type) {
+  const map = { tech: 'tecnologia', business: 'negocios', creative: 'creatividad', healthcare: 'salud' };
+  return map[type] || type;
+}
+
 // 2. Función para analizar el texto en busca de palabras clave
 function analyzeKeywords(text, sector) {
-  if (!sector || !keywordsBySector[sector]) return { score: 0, missing: [] };
+  const sectorKey = mapCVTypeToSector(sector);
+  if (!sectorKey || !keywordsBySector[sectorKey]) return { score: 0, missing: [] };
   
-  const relevantKeywords = keywordsBySector[sector];
+  const relevantKeywords = keywordsBySector[sectorKey];
   const textLower = text.toLowerCase();
   
   // Palabras clave encontradas
@@ -2747,7 +2838,7 @@ function analyzeKeywords(text, sector) {
   // Palabras clave faltantes (máximo 5 sugerencias)
   const missing = relevantKeywords
     .filter(keyword => !textLower.includes(keyword.toLowerCase()))
-    .sort(() => 0.5 - Math.random()) // Mezclar aleatoriamente
+    .sort(() => 0.5 - Math.random())
     .slice(0, 5);
   
   // Calcular puntuación (0-100)
@@ -3530,3 +3621,218 @@ steps.forEach((step, index) => {
     });
   });
 });
+
+// Exportar CV a HTML auto-contenido
+function exportToHTML() {
+  // Asegurar datos actualizados
+  collectFormData();
+  
+  const cssByStyle = {
+    profesional: `:root{--bg:#ffffff;--fg:#111;--accent:#f1c40f;--heading:#2c3e50;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:32px;font-weight:700;color:var(--accent);text-align:center;} .contact{text-align:center;color:#777;margin:6px 0 24px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:var(--heading);} .item{margin:12px 0;} .muted{color:var(--muted);font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f7f7f7;border-radius:16px;padding:6px 10px;font-size:12px;}`,
+    minimalista: `:root{--bg:#ffffff;--fg:#111;--accent:#111;--heading:#111;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:34px;font-weight:700;color:var(--heading);} .contact{color:#555;margin:6px 0 28px;} h2{font-size:13px;letter-spacing:1.4px;color:var(--heading);border-bottom:1px solid #ddd;padding-bottom:8px;margin:26px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:14px 0;} .muted{color:var(--muted);} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f0f0f0;border-radius:14px;padding:6px 10px;font-size:12px;}`,
+    creativo: `:root{--bg:#6a11cb;--fg:#fff;--accent:#ffcc00;--heading:#fff;--muted:#eee;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:56px;} .name{font-size:36px;font-weight:800;color:var(--accent);text-align:center;} .contact{text-align:center;color:#f6f6f6;margin:6px 0 28px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:17px;color:#fff;} .item{margin:14px 0;} .muted{color:#f0f0f0;font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:rgba(255,255,255,0.12);border-radius:16px;padding:6px 10px;font-size:12px;}`,
+    ejecutivo: `:root{--bg:#ffffff;--fg:#111;--accent:#3498db;--heading:#34495e;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:32px;font-weight:700;color:var(--heading);} .contact{color:#4a5568;margin:6px 0 24px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:var(--heading);} .item{margin:12px 0;} .muted{color:var(--muted);font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#eef6fc;border-radius:16px;padding:6px 10px;font-size:12px;color:#1f4e6b;}`,
+    tecnologico: `:root{--bg:#1a1a2e;--fg:#e0e0e0;--accent:#00ff9d;--heading:#e0e0e0;--muted:#bdbdbd;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:32px;font-weight:800;color:var(--accent);} .contact{color:#cfd8dc;margin:6px 0 24px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:#e0e0e0;} .item{margin:12px 0;} .muted{color:var(--muted);} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:rgba(0,255,157,0.12);border-radius:16px;padding:6px 10px;font-size:12px;color:#00ff9d;}`,
+    academico: `:root{--bg:#ffffff;--fg:#111;--accent:#8e44ad;--heading:#111;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:56px;} .name{font-size:30px;font-weight:800;color:var(--heading);text-align:center;} .contact{text-align:center;color:#555;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.4px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:26px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:var(--muted);} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f2e6f7;border-radius:16px;padding:6px 10px;font-size:12px;color:#6b2f84;}`,
+    moderno: `:root{--bg:#fff;--fg:#111;--accent:#111;--muted:#666;--sidebar:#f1f5f9;} body{font-family:Inter,Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;display:grid;grid-template-columns:240px 1fr;gap:24px;} .name{font-size:30px;font-weight:800;color:var(--accent);} .contact{color:#4b5563;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.2px;color:var(--accent);border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin:20px 0 10px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:#6b7280;font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#eef2f7;border-radius:16px;padding:6px 10px;font-size:12px;color:#111;} .sidebar{background:var(--sidebar);padding:12px;border-radius:10px;} .photo{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;margin-bottom:12px;}`,
+    ats: `:root{--bg:#fff;--fg:#111;--accent:#111;--muted:#666;} body{font-family:Inter,Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:28px;font-weight:800;color:var(--accent);} .contact{color:#4b5563;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.2px;color:#111;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin:20px 0 10px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:#6b7280;font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f3f4f6;border-radius:16px;padding:6px 10px;font-size:12px;color:#111;}`
+  };
+
+  const css = cssByStyle[selectedStyle] || cssByStyle['profesional'];
+  const isTwoCol = selectedStyle === 'moderno' || selectedStyle === 'ejecutivo' || selectedStyle === 'tecnologico';
+
+  // Construcción del HTML
+  const escape = (s) => (s || '').toString();
+  const expItems = formData.experience.map(exp => {
+    const bullets = (exp.description || '').split('\n').filter(Boolean).map(b => `<li>${escape(b.replace(/^•\s?/, ''))}</li>`).join('');
+    return `
+    <div class=\"item\">\n      <h3>${escape(exp.position)}</h3>\n      <div class=\"muted\">${escape(exp.company)} | ${escape(exp.duration)}</div>\n      ${bullets ? `<ul>${bullets}</ul>` : ''}\n    </div>`;
+  }).join('');
+  const eduItems = formData.education.map(edu => `
+    <div class="item">
+      <h3>${escape(edu.degree)}</h3>
+      <div class="muted">${escape(edu.institution)} | ${escape(edu.year)}</div>
+    </div>`).join('');
+  const skills = formData.skills.map(s => `<span class="skill">${escape(s)}</span>`).join('');
+  
+  let bodyHtml = '';
+  if (isTwoCol) {
+    // Sidebar con Contacto/Educación/Habilidades
+    const sidePhoto = avatarDataUrl ? `<img class=\"photo\" src=\"${avatarDataUrl}\"/>` : '';
+    const nameLine = (formData.aiHeadline ? `${escape(formData.aiHeadline)} — ` : '') + escape(formData.name);
+    bodyHtml = `<div class=\"page\"><aside class=\"sidebar\">${sidePhoto}<section><h2>CONTACTO</h2><div>${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div></section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></aside><main><div class=\"name\">${nameLine}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || '')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section></main></div>`;}
+  } else {
+    const inlinePhoto = avatarDataUrl ? `<img class=\"photo\" src=\"${avatarDataUrl}\" style=\"float:right;margin-left:12px;\"/>` : '';
+          const nameLine2 = (formData.aiHeadline ? `${escape(formData.aiHeadline)} — ` : '') + escape(formData.name);
+      bodyHtml = `<div class=\"page\">${inlinePhoto}<div class=\"name\">${nameLine2}</div><div class=\"contact\">${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || '')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></div>`;
+  }
+  const html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>${escape(formData.name)} - CV</title><style>${css} @media print { @page { size: A4; margin: 16mm; } .page{max-width: none; padding: 0;} }</style></head><body>${bodyHtml}</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  saveAs(blob, `${(formData.name || 'CV').replace(/\s+/g, '_')}_CV.html`);
+}
+
+// Reemplazar uso de API key fija con almacenamiento local/entrada de usuario
+async function llamarGeminiAPI(prompt) {
+  const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+  let apiKey = localStorage.getItem('geminiApiKey');
+  if (!apiKey) {
+    const input = document.getElementById('gemini-api-key');
+    if (input && input.value.trim()) {
+      apiKey = input.value.trim();
+      localStorage.setItem('geminiApiKey', apiKey);
+    }
+  }
+  if (!apiKey) {
+    throw new Error('Falta la clave API de Gemini. Configúrala en la sección 1.');
+  }
+
+  const datos = {
+    contents: [
+      { parts: [{ text: prompt }] }
+    ]
+  };
+
+  const respuesta = await fetch(`${API_URL}?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos)
+  });
+
+  if (!respuesta.ok) {
+    throw new Error(`Error en la API: ${respuesta.status} ${respuesta.statusText}`);
+  }
+  return await respuesta.json();
+}
+
+// Guardado/carga de clave API y toggle de visibilidad
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('gemini-api-key');
+  const saveBtn = document.getElementById('save-api-key');
+  const toggleBtn = document.getElementById('toggle-api-visibility');
+
+  if (input) {
+    const saved = localStorage.getItem('geminiApiKey');
+    if (saved) input.value = saved;
+  }
+
+  if (saveBtn && input) {
+    saveBtn.addEventListener('click', () => {
+      const val = (input.value || '').trim();
+      if (val) {
+        localStorage.setItem('geminiApiKey', val);
+        // Feedback breve
+        const msg = document.createElement('div');
+        msg.textContent = 'Clave guardada ✓';
+        msg.style.position = 'fixed';
+        msg.style.bottom = '20px';
+        msg.style.right = '20px';
+        msg.style.background = '#2ecc71';
+        msg.style.color = 'white';
+        msg.style.padding = '8px 12px';
+        msg.style.borderRadius = '6px';
+        msg.style.zIndex = '1200';
+        document.body.appendChild(msg);
+        setTimeout(() => document.body.removeChild(msg), 1500);
+      }
+    });
+  }
+
+  if (toggleBtn && input) {
+    toggleBtn.addEventListener('click', () => {
+      if (input.type === 'password') {
+        input.type = 'text';
+        toggleBtn.innerHTML = '<i class="fa fa-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        toggleBtn.innerHTML = '<i class="fa fa-eye"></i>';
+      }
+    });
+  }
+});
+
+// Foto de perfil: manejo de subida y preview
+const photoInput = document.getElementById('photo-input');
+const photoPreview = document.getElementById('photo-preview');
+let photoDataUrl = '';
+let avatarDataUrl = '';
+
+async function generateAvatar(dataUrl, size = 128) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      // Fondo transparente
+      ctx.clearRect(0, 0, size, size);
+      // Clip circular
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.save();
+      ctx.clip();
+      // Cover image dentro del círculo
+      const imgRatio = img.width / img.height;
+      const canvasRatio = 1;
+      let drawW, drawH;
+      if (imgRatio > canvasRatio) {
+        drawH = size;
+        drawW = size * imgRatio;
+      } else {
+        drawW = size;
+        drawH = size / imgRatio;
+      }
+      const dx = (size - drawW) / 2;
+      const dy = (size - drawH) / 2;
+      ctx.drawImage(img, dx, dy, drawW, drawH);
+      ctx.restore();
+      // Borde blanco
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 3, 0, Math.PI * 2);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      // Anillo gris claro
+      ctx.beginPath();
+      ctx.arc(size / 2, size / 2, size / 2 - 1.5, 0, Math.PI * 2);
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.crossOrigin = 'anonymous';
+    img.src = dataUrl;
+  });
+}
+
+if (photoInput) {
+  photoInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      photoDataUrl = reader.result;
+      avatarDataUrl = await generateAvatar(photoDataUrl, 128);
+      if (photoPreview) {
+        photoPreview.src = avatarDataUrl;
+        photoPreview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Navegación entre pasos: back buttons
+function setupBackButtons() {
+  const backTo1 = document.getElementById('back-to-step1');
+  const backTo2 = document.getElementById('back-to-step2');
+  const backTo3 = document.getElementById('back-to-step3');
+  if (backTo1) backTo1.addEventListener('click', () => sections[0].scrollIntoView({ behavior: 'smooth' }));
+  if (backTo2) backTo2.addEventListener('click', () => sections[1].scrollIntoView({ behavior: 'smooth' }));
+  if (backTo3) backTo3.addEventListener('click', () => sections[2].scrollIntoView({ behavior: 'smooth' }));
+}
+
+document.addEventListener('DOMContentLoaded', setupBackButtons);
+

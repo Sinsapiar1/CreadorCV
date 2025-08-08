@@ -5,7 +5,7 @@
   }
   
   body {
-    font-family: "Helvetica Neue", sans-serif;
+    font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
     line-height: 1.6;
     color: #333;
     overflow-x: hidden;
@@ -130,6 +130,15 @@
     margin-top: -18px;
     cursor: pointer;
   }
+  /* Mejora de interacción de pasos */
+  .progress-step::after {
+    content: attr(data-step);
+    position: absolute;
+    top: 46px;
+    font-size: 11px;
+    color: #666;
+  }
+  .progress-step.active::after { color: #111; font-weight: 600; }
   
   .progress-step:hover {
     transform: scale(1.1);
@@ -383,6 +392,51 @@
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
   }
+  /* Foto en preview */
+  .cv-header img#preview-photo {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
+  }
+  /* Foto HTML export (reutilizamos clase .photo para consistencia) */
+  .photo {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+  }
+  /* Ayuda API */
+  .api-help {
+    margin-top: 6px;
+    font-size: 0.9rem;
+  }
+  .api-help a { color: #2563eb; text-decoration: underline; }
+  /* Dos columnas en la previsualización */
+  .cv-preview.two-col {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+  }
+  .cv-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .cv-preview.two-col .cv-summary,
+  .cv-preview.two-col .cv-experience { grid-column: 2; }
+  .cv-preview.two-col .cv-education,
+  .cv-preview.two-col .cv-skills { grid-column: 1; }
+
+  @media (max-width: 900px) {
+    .cv-preview.two-col { grid-template-columns: 1fr; }
+    .cv-preview.two-col .cv-summary,
+    .cv-preview.two-col .cv-experience,
+    .cv-preview.two-col .cv-education,
+    .cv-preview.two-col .cv-skills { grid-column: 1; }
+  }
   
   .cv-header {
     display: flex;
@@ -576,6 +630,8 @@
       min-height: auto;
       margin: 4rem 0;
     }
+    /* Aumentar separación entre stepper y contenido final */
+    #section4 { padding-bottom: 72px; }
     .text-block {
       flex: 1;
       width: 100%;
@@ -592,14 +648,23 @@
       height: auto;
     }
     .progress-bar {
-      width: 250px;
-      top: 20px;
+      width: 100%;
+      left: 0;
+      transform: none;
+      top: auto;
+      bottom: 0;
+      height: 56px;
+      background: rgba(255,255,255,0.9);
+      border-top: 1px solid #eee;
+      padding: 0 12px;
     }
     .progress-step {
-      width: 35px;
-      height: 35px;
+      width: 44px;
+      height: 44px;
       font-size: 16px;
+      margin-top: 0;
     }
+    .progress-bar::before { display:none; }
     .cv-type-options {
       grid-template-columns: 1fr;
     }
@@ -1085,4 +1150,122 @@ body.dark-mode .form-subgroup {
   overflow-y: auto; /* Asegura el scroll */
   height: 100vh; /* Altura completa */
   scroll-behavior: smooth; /* Desplazamiento suave */
+}
+
+/* Configuración de API */
+.api-key-container {
+  margin-top: 2rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.06);
+}
+.api-key-container h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+.api-key-container label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.api-key-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.5rem;
+}
+.api-key-container input#gemini-api-key {
+  padding: 0.8rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+.api-key-container .icon-btn {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  cursor: pointer;
+}
+.api-key-note {
+  display: block;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+@media screen and (max-width: 600px) {
+  .api-key-row { grid-template-columns: 1fr auto; }
+}
+
+/* Botón HTML */
+.download-btn.html {
+  background: #2980b9;
+  color: #fff;
+}
+.download-btn.html:hover {
+  background: #1f6da0;
+}
+
+/* Modo oscuro para el bloque de API */
+body.dark-mode .api-key-container {
+  background: #2a2a3c;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+body.dark-mode .api-key-note { color: #aaa; }
+
+/* Nuevos estilos de tarjetas */
+.moderno-preview {
+  background: linear-gradient(to right, #f8fafc 30%, #e2e8f0 30%);
+  position: relative;
+}
+.moderno-preview::before {
+  content: "";
+  position: absolute;
+  left: 35%;
+  top: 20%;
+  width: 55%;
+  height: 4px;
+  background: #111;
+}
+.ats-preview {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+.ats-preview::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  top: 20%;
+  width: 80%;
+  height: 4px;
+  background: #111;
+}
+.ats-preview::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  top: 60%;
+  width: 80%;
+  height: 30%;
+  background: rgba(0,0,0,0.05);
+}
+/* Foto input */
+.photo-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.photo-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: none;
+  border: 1px solid #e5e7eb;
+}
+/* Botonera de pasos */
+.step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
 }

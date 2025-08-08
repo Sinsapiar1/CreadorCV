@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Generador de CV con IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
   <!-- Barra de progreso -->
@@ -89,6 +89,31 @@
         <h4>Académico</h4>
         <p>Formato tradicional para entornos educativos</p>
       </div>
+
+      <div class="cv-style-card" data-style="moderno" onclick="selectStyle('moderno')">
+        <div class="style-preview moderno-preview"></div>
+        <h4>Moderno</h4>
+        <p>Barra lateral clara y tipografía limpia</p>
+      </div>
+
+      <div class="cv-style-card" data-style="ats" onclick="selectStyle('ats')">
+        <div class="style-preview ats-preview"></div>
+        <h4>ATS</h4>
+        <p>Compatible con filtros automatizados</p>
+      </div>
+    </div>
+  </div>
+  <div class="api-key-container">
+    <h3>Configurar IA</h3>
+    <label for="gemini-api-key">Clave API de Gemini</label>
+    <div class="api-key-row">
+      <input type="password" id="gemini-api-key" placeholder="Ingresa tu clave API" autocomplete="off" />
+      <button id="toggle-api-visibility" class="icon-btn" type="button" title="Mostrar/Ocultar"><i class="fa fa-eye"></i></button>
+      <button id="save-api-key" class="next-section-btn" type="button">Guardar clave</button>
+    </div>
+    <small class="api-key-note">Tu clave se guarda solo en este navegador (localStorage) y se usa directamente contra la API de Google. No se envía a nuestros servidores.</small>
+    <div class="api-help">
+      ¿No tienes clave? <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Obtén tu clave API de Gemini</a>
     </div>
   </div>
     </section>
@@ -101,6 +126,14 @@
         <p>Completa tus datos profesionales a continuación. Nuestra IA ayudará a optimizar tu CV para máximo impacto.</p>
         
         <form id="cv-form" class="cv-form">
+          <div class="form-group photo-field">
+            <label>Foto (opcional)</label>
+            <div class="photo-input-row">
+              <input type="file" id="photo-input" accept="image/*">
+              <img id="photo-preview" class="photo-preview" alt="Vista previa" />
+            </div>
+            <small>Usa una foto profesional, fondo neutro, buena iluminación.</small>
+          </div>
           <div class="form-group">
             <label>Nombre Completo</label>
             <input type="text" name="name" placeholder="Juan Pérez" required>
@@ -146,8 +179,11 @@
             <textarea name="skills" placeholder="Liderazgo, Gestión de Proyectos, Microsoft Office" rows="3"></textarea>
           </div>
         </form>
-        
-        <button id="generate-cv-btn" class="next-section-btn">Generar CV con IA</button>
+         
+        <div class="step-actions">
+          <button id="back-to-step1" type="button" class="next-section-btn" style="background:#6b7280">Volver a Paso 1</button>
+          <button id="generate-cv-btn" class="next-section-btn">Generar CV con IA</button>
+        </div>
       </div>
       <div class="image-block">
         <img src="https://raw.githubusercontent.com/mickaellherminez/img/main/codepen/january-week1/image-2.png" alt="Ilustración de formulario" class="image-placeholder" />
@@ -183,6 +219,9 @@
           </div>
           
           <button id="preview-btn" class="next-section-btn hidden">Vista Previa de tu CV</button>
+          <div class="step-actions">
+            <button id="back-to-step2" type="button" class="next-section-btn" style="background:#6b7280">Volver al Formulario</button>
+          </div>
         </div>
       </div>
       <div class="image-block">
@@ -198,6 +237,7 @@
         
         <div id="cv-preview" class="cv-preview">
           <div class="cv-header">
+            <img id="preview-photo" src="" alt="Foto" style="display:none;" />
             <h3 id="preview-name">Nombre Completo</h3>
             <div class="cv-contact">
               <p><span id="preview-email">email@ejemplo.com</span> | <span id="preview-phone">+34 123 456 789</span></p>
@@ -240,6 +280,9 @@
             <button id="download-docx" class="download-btn docx">
               Descargar DOCX
             </button>
+          </div>
+          <div class="step-actions">
+            <button id="back-to-step3" type="button" class="next-section-btn" style="background:#6b7280">Volver a Paso 3</button>
           </div>
         </div>
       </div>
