@@ -400,6 +400,20 @@
     object-fit: cover;
     border: 2px solid #eee;
   }
+  /* Foto HTML export (reutilizamos clase .photo para consistencia) */
+  .photo {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e5e7eb;
+  }
+  /* Ayuda API */
+  .api-help {
+    margin-top: 6px;
+    font-size: 0.9rem;
+  }
+  .api-help a { color: #2563eb; text-decoration: underline; }
   /* Dos columnas en la previsualización */
   .cv-preview.two-col {
     display: grid;
@@ -616,6 +630,8 @@
       min-height: auto;
       margin: 4rem 0;
     }
+    /* Aumentar separación entre stepper y contenido final */
+    #section4 { padding-bottom: 72px; }
     .text-block {
       flex: 1;
       width: 100%;
