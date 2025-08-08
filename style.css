@@ -632,14 +632,23 @@
       height: auto;
     }
     .progress-bar {
-      width: 250px;
-      top: 20px;
+      width: 100%;
+      left: 0;
+      transform: none;
+      top: auto;
+      bottom: 0;
+      height: 56px;
+      background: rgba(255,255,255,0.9);
+      border-top: 1px solid #eee;
+      padding: 0 12px;
     }
     .progress-step {
-      width: 35px;
-      height: 35px;
+      width: 44px;
+      height: 44px;
       font-size: 16px;
+      margin-top: 0;
     }
+    .progress-bar::before { display:none; }
     .cv-type-options {
       grid-template-columns: 1fr;
     }

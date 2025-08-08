@@ -660,7 +660,13 @@ function adjustPreviewLayout() {
 // Previsualizar CV
 previewBtn.addEventListener('click', () => {
   // Navegar a la sección de previsualización
-  sections[3].scrollIntoView({ behavior: "smooth" });
+  sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
+  // En móvil, forzar posición y actualizar barra de progreso
+  setTimeout(() => {
+    window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
+    steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
+    applyTheme(3);
+  }, 200);
   
   // Llenar la vista previa con los datos
   document.getElementById('preview-name').textContent = formData.name;
@@ -1407,7 +1413,16 @@ downloadPDFBtn.addEventListener('click', () => {
 
     // Reemplaza tu función de generación de DOCX con esta versión que incluye múltiples estilos
 
-downloadDOCXBtn.addEventListener('click', () => {
+function dataURLToArrayBuffer(dataURL) {
+  const base64 = dataURL.split(',')[1];
+  const binary = atob(base64);
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes.buffer;
+}
+
+downloadDOCXBtn.addEventListener('click', async () => {
     // Mostrar mensaje de carga
     const mensaje = document.createElement('div');
     mensaje.textContent = 'Generando DOCX...';
@@ -1425,7 +1440,7 @@ downloadDOCXBtn.addEventListener('click', () => {
     try {
       // Obtener la configuración de estilo para DOCX
       const styleConfig = getDOCXStyleConfig(selectedStyle);
-      styleConfig.twoColumn = ['ejecutivo','tecnologico'].includes(selectedStyle);
+      styleConfig.twoColumn = ['ejecutivo','tecnologico','moderno'].includes(selectedStyle);
    
       // Array para almacenar todos los elementos del documento
       const documentElements = [];
@@ -1433,6 +1448,24 @@ downloadDOCXBtn.addEventListener('click', () => {
       // Añadir elementos específicos al principio según el estilo
       if (styleConfig.headerElements) {
         documentElements.push(...styleConfig.headerElements);
+      }
+      
+      // Foto (si existe)
+      let imageRun = null;
+      if (typeof docx !== 'undefined' && photoDataUrl) {
+        try {
+          const arrayBuffer = dataURLToArrayBuffer(photoDataUrl);
+          const image = docx.Media.addImage
+            ? docx.Media.addImage
+            : null;
+          if (image) {
+            const img = image({
+              data: arrayBuffer,
+              transformation: { width: 2400000 / 96 * 96, height: 2400000 / 96 * 96 }
+            });
+            imageRun = img;
+          }
+        } catch (e) { console.warn('No se pudo insertar imagen en DOCX', e); }
       }
       
       // 1. Encabezado con nombre y datos de contacto
@@ -1445,6 +1478,9 @@ downloadDOCXBtn.addEventListener('click', () => {
           color: styleConfig.nameColor
         })
       );
+      if (imageRun) {
+        documentElements.push(new docx.Paragraph(imageRun));
+      }
       
       documentElements.push(
         new docx.Paragraph({
@@ -2671,7 +2707,13 @@ function addExportToHTMLButton() {
 // Modifica previewBtn para que limpie los botones anteriores si es necesario
 previewBtn.addEventListener('click', () => {
   // Navegar a la sección de previsualización
-  sections[3].scrollIntoView({ behavior: "smooth" });
+  sections[3].scrollIntoView({ behavior: "smooth", block: 'start' });
+  // En móvil, forzar posición y actualizar barra de progreso
+  setTimeout(() => {
+    window.scrollTo({ top: sections[3].offsetTop - 20, behavior: 'smooth' });
+    steps.forEach((s, i) => { if (i <= 3) s.classList.add('active'); });
+    applyTheme(3);
+  }, 200);
   
   // Llenar la vista previa con los datos
   document.getElementById('preview-name').textContent = formData.name;
