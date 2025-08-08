@@ -1464,9 +1464,10 @@ downloadDOCXBtn.addEventListener('click', async () => {
       }
       
       // 1. Encabezado con nombre y datos de contacto
+      const nameLine = (formData.aiHeadline ? formData.aiHeadline + ' — ' : '') + formData.name;
       documentElements.push(
         new docx.Paragraph({
-          text: formData.name,
+          text: nameLine,
           heading: docx.HeadingLevel.HEADING_1,
           alignment: styleConfig.nameAlignment,
           spacing: { after: styleConfig.nameSpacingAfter },
@@ -1558,13 +1559,16 @@ downloadDOCXBtn.addEventListener('click', async () => {
           })
         );
         
-        documentElements.push(
-          new docx.Paragraph({
-            text: exp.description,
-            spacing: { after: styleConfig.paragraphSpacingAfter },
-            ...styleConfig.paragraphStyle
-          })
-        );
+        // Bullets mejorados si existen
+        if (exp.description && exp.description.includes('\n')) {
+          exp.description.split('\n').forEach(line => {
+            const clean = line.replace(/^•\s?/, '').trim();
+            if (!clean) return;
+            documentElements.push(new docx.Paragraph({ text: clean, bullet: { level: 0 }, ...styleConfig.paragraphStyle }));
+          });
+        } else if (exp.description) {
+          documentElements.push(new docx.Paragraph({ text: exp.description, spacing: { after: styleConfig.paragraphSpacingAfter }, ...styleConfig.paragraphStyle }));
+        }
       });
       
       // 5. Educación
@@ -3639,12 +3643,11 @@ function exportToHTML() {
 
   // Construcción del HTML
   const escape = (s) => (s || '').toString();
-  const expItems = formData.experience.map(exp => `
-    <div class="item">
-      <h3>${escape(exp.position)}</h3>
-      <div class="muted">${escape(exp.company)} | ${escape(exp.duration)}</div>
-      <div>${escape(exp.description)}</div>
-    </div>`).join('');
+  const expItems = formData.experience.map(exp => {
+    const bullets = (exp.description || '').split('\n').filter(Boolean).map(b => `<li>${escape(b.replace(/^•\s?/, ''))}</li>`).join('');
+    return `
+    <div class=\"item\">\n      <h3>${escape(exp.position)}</h3>\n      <div class=\"muted\">${escape(exp.company)} | ${escape(exp.duration)}</div>\n      ${bullets ? `<ul>${bullets}</ul>` : ''}\n    </div>`;
+  }).join('');
   const eduItems = formData.education.map(edu => `
     <div class="item">
       <h3>${escape(edu.degree)}</h3>
@@ -3656,10 +3659,12 @@ function exportToHTML() {
   if (isTwoCol) {
     // Sidebar con Contacto/Educación/Habilidades
     const sidePhoto = avatarDataUrl ? `<img class=\"photo\" src=\"${avatarDataUrl}\"/>` : '';
-    bodyHtml = `<div class=\"page\"><aside class=\"sidebar\">${sidePhoto}<section><h2>CONTACTO</h2><div>${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div></section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></aside><main><div class=\"name\">${escape(formData.name)}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section></main></div>`;
+    const nameLine = (formData.aiHeadline ? `${escape(formData.aiHeadline)} — ` : '') + escape(formData.name);
+    bodyHtml = `<div class=\"page\"><aside class=\"sidebar\">${sidePhoto}<section><h2>CONTACTO</h2><div>${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div></section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></aside><main><div class=\"name\">${nameLine}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || '')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section></main></div>`;}
   } else {
     const inlinePhoto = avatarDataUrl ? `<img class=\"photo\" src=\"${avatarDataUrl}\" style=\"float:right;margin-left:12px;\"/>` : '';
-    bodyHtml = `<div class=\"page\">${inlinePhoto}<div class=\"name\">${escape(formData.name)}</div><div class=\"contact\">${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || 'Profesional con experiencia en su sector.')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></div>`;
+          const nameLine2 = (formData.aiHeadline ? `${escape(formData.aiHeadline)} — ` : '') + escape(formData.name);
+      bodyHtml = `<div class=\"page\">${inlinePhoto}<div class=\"name\">${nameLine2}</div><div class=\"contact\">${escape(formData.email)}${formData.phone ? ' | ' + escape(formData.phone) : ''}</div><section><h2>RESUMEN PROFESIONAL</h2><div>${escape(formData.aiSummary || '')}</div></section><section><h2>EXPERIENCIA PROFESIONAL</h2>${expItems}</section><section><h2>EDUCACIÓN</h2>${eduItems}</section><section><h2>HABILIDADES</h2><div class=\"skills\">${skills}</div></section></div>`;
   }
   const html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><title>${escape(formData.name)} - CV</title><style>${css} @media print { @page { size: A4; margin: 16mm; } .page{max-width: none; padding: 0;} }</style></head><body>${bodyHtml}</body></html>`;
 
