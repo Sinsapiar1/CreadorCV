@@ -3831,24 +3831,3 @@ function setupBackButtons() {
 
 document.addEventListener('DOMContentLoaded', setupBackButtons);
 
-// ... existing code ...
-  // Foto
--  const previewPhoto = document.getElementById('preview-photo');
--  if (previewPhoto) {
--    if (photoDataUrl) {
--      previewPhoto.src = photoDataUrl;
--      previewPhoto.style.display = 'block';
--    } else {
--      previewPhoto.style.display = 'none';
--    }
--  }
-+  const previewPhoto = document.getElementById('preview-photo');
-+  if (previewPhoto) {
-+    if (avatarDataUrl) {
-+      previewPhoto.src = avatarDataUrl;
-+      previewPhoto.style.display = 'block';
-+    } else {
-+      previewPhoto.style.display = 'none';
-+    }
-+  }
-// ... existing code ...
