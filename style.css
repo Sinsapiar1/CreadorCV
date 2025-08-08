@@ -130,6 +130,15 @@
     margin-top: -18px;
     cursor: pointer;
   }
+  /* Mejora de interacción de pasos */
+  .progress-step::after {
+    content: attr(data-step);
+    position: absolute;
+    top: 46px;
+    font-size: 11px;
+    color: #666;
+  }
+  .progress-step.active::after { color: #111; font-weight: 600; }
   
   .progress-step:hover {
     transform: scale(1.1);
@@ -382,6 +391,14 @@
     border-radius: 10px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
     margin-bottom: 2rem;
+  }
+  /* Foto en preview */
+  .cv-header img#preview-photo {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #eee;
   }
   /* Dos columnas en la previsualización */
   .cv-preview.two-col {
@@ -1169,3 +1186,61 @@ body.dark-mode .api-key-container {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 body.dark-mode .api-key-note { color: #aaa; }
+
+/* Nuevos estilos de tarjetas */
+.moderno-preview {
+  background: linear-gradient(to right, #f8fafc 30%, #e2e8f0 30%);
+  position: relative;
+}
+.moderno-preview::before {
+  content: "";
+  position: absolute;
+  left: 35%;
+  top: 20%;
+  width: 55%;
+  height: 4px;
+  background: #111;
+}
+.ats-preview {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  position: relative;
+}
+.ats-preview::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  top: 20%;
+  width: 80%;
+  height: 4px;
+  background: #111;
+}
+.ats-preview::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  top: 60%;
+  width: 80%;
+  height: 30%;
+  background: rgba(0,0,0,0.05);
+}
+/* Foto input */
+.photo-input-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.photo-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: none;
+  border: 1px solid #e5e7eb;
+}
+/* Botonera de pasos */
+.step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}

@@ -89,6 +89,18 @@
         <h4>Académico</h4>
         <p>Formato tradicional para entornos educativos</p>
       </div>
+
+      <div class="cv-style-card" data-style="moderno" onclick="selectStyle('moderno')">
+        <div class="style-preview moderno-preview"></div>
+        <h4>Moderno</h4>
+        <p>Barra lateral clara y tipografía limpia</p>
+      </div>
+
+      <div class="cv-style-card" data-style="ats" onclick="selectStyle('ats')">
+        <div class="style-preview ats-preview"></div>
+        <h4>ATS</h4>
+        <p>Compatible con filtros automatizados</p>
+      </div>
     </div>
   </div>
   <div class="api-key-container">
@@ -111,6 +123,14 @@
         <p>Completa tus datos profesionales a continuación. Nuestra IA ayudará a optimizar tu CV para máximo impacto.</p>
         
         <form id="cv-form" class="cv-form">
+          <div class="form-group photo-field">
+            <label>Foto (opcional)</label>
+            <div class="photo-input-row">
+              <input type="file" id="photo-input" accept="image/*">
+              <img id="photo-preview" class="photo-preview" alt="Vista previa" />
+            </div>
+            <small>Usa una foto profesional, fondo neutro, buena iluminación.</small>
+          </div>
           <div class="form-group">
             <label>Nombre Completo</label>
             <input type="text" name="name" placeholder="Juan Pérez" required>
@@ -156,8 +176,11 @@
             <textarea name="skills" placeholder="Liderazgo, Gestión de Proyectos, Microsoft Office" rows="3"></textarea>
           </div>
         </form>
-        
-        <button id="generate-cv-btn" class="next-section-btn">Generar CV con IA</button>
+         
+        <div class="step-actions">
+          <button id="back-to-step1" type="button" class="next-section-btn" style="background:#6b7280">Volver a Paso 1</button>
+          <button id="generate-cv-btn" class="next-section-btn">Generar CV con IA</button>
+        </div>
       </div>
       <div class="image-block">
         <img src="https://raw.githubusercontent.com/mickaellherminez/img/main/codepen/january-week1/image-2.png" alt="Ilustración de formulario" class="image-placeholder" />
@@ -193,6 +216,9 @@
           </div>
           
           <button id="preview-btn" class="next-section-btn hidden">Vista Previa de tu CV</button>
+          <div class="step-actions">
+            <button id="back-to-step2" type="button" class="next-section-btn" style="background:#6b7280">Volver al Formulario</button>
+          </div>
         </div>
       </div>
       <div class="image-block">
@@ -208,6 +234,7 @@
         
         <div id="cv-preview" class="cv-preview">
           <div class="cv-header">
+            <img id="preview-photo" src="" alt="Foto" style="display:none;" />
             <h3 id="preview-name">Nombre Completo</h3>
             <div class="cv-contact">
               <p><span id="preview-email">email@ejemplo.com</span> | <span id="preview-phone">+34 123 456 789</span></p>
@@ -250,6 +277,9 @@
             <button id="download-docx" class="download-btn docx">
               Descargar DOCX
             </button>
+          </div>
+          <div class="step-actions">
+            <button id="back-to-step3" type="button" class="next-section-btn" style="background:#6b7280">Volver a Paso 3</button>
           </div>
         </div>
       </div>

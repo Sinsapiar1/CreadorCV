@@ -3572,7 +3572,9 @@ function exportToHTML() {
     creativo: `:root{--bg:#6a11cb;--fg:#fff;--accent:#ffcc00;--heading:#fff;--muted:#eee;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:56px;} .name{font-size:36px;font-weight:800;color:var(--accent);text-align:center;} .contact{text-align:center;color:#f6f6f6;margin:6px 0 28px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:17px;color:#fff;} .item{margin:14px 0;} .muted{color:#f0f0f0;font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:rgba(255,255,255,0.12);border-radius:16px;padding:6px 10px;font-size:12px;}`,
     ejecutivo: `:root{--bg:#ffffff;--fg:#111;--accent:#3498db;--heading:#34495e;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:32px;font-weight:700;color:var(--heading);} .contact{color:#4a5568;margin:6px 0 24px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--heading);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:var(--heading);} .item{margin:12px 0;} .muted{color:var(--muted);font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#eef6fc;border-radius:16px;padding:6px 10px;font-size:12px;color:#1f4e6b;}`,
     tecnologico: `:root{--bg:#1a1a2e;--fg:#e0e0e0;--accent:#00ff9d;--heading:#e0e0e0;--muted:#bdbdbd;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:32px;font-weight:800;color:var(--accent);} .contact{color:#cfd8dc;margin:6px 0 24px;} h2{font-size:14px;letter-spacing:1.2px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:28px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:#e0e0e0;} .item{margin:12px 0;} .muted{color:var(--muted);} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:rgba(0,255,157,0.12);border-radius:16px;padding:6px 10px;font-size:12px;color:#00ff9d;}`,
-    academico: `:root{--bg:#ffffff;--fg:#111;--accent:#8e44ad;--heading:#111;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:56px;} .name{font-size:30px;font-weight:800;color:var(--heading);text-align:center;} .contact{text-align:center;color:#555;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.4px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:26px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:var(--muted);} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f2e6f7;border-radius:16px;padding:6px 10px;font-size:12px;color:#6b2f84;}`
+    academico: `:root{--bg:#ffffff;--fg:#111;--accent:#8e44ad;--heading:#111;--muted:#666;} body{font-family:Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:56px;} .name{font-size:30px;font-weight:800;color:var(--heading);text-align:center;} .contact{text-align:center;color:#555;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.4px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:6px;margin:26px 0 12px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:var(--muted);} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f2e6f7;border-radius:16px;padding:6px 10px;font-size:12px;color:#6b2f84;}`,
+    moderno: `:root{--bg:#fff;--fg:#111;--accent:#111;--muted:#666;--sidebar:#f1f5f9;} body{font-family:Inter,Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;display:grid;grid-template-columns:240px 1fr;gap:24px;} .name{font-size:30px;font-weight:800;color:var(--accent);} .contact{color:#4b5563;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.2px;color:var(--accent);border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin:20px 0 10px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:#6b7280;font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#eef2f7;border-radius:16px;padding:6px 10px;font-size:12px;color:#111;} .sidebar{background:var(--sidebar);padding:12px;border-radius:10px;} .photo{width:96px;height:96px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;margin-bottom:12px;}`,
+    ats: `:root{--bg:#fff;--fg:#111;--accent:#111;--muted:#666;} body{font-family:Inter,Helvetica,Arial,sans-serif;color:var(--fg);background:var(--bg);margin:0;} .page{max-width:800px;margin:0 auto;padding:48px;} .name{font-size:28px;font-weight:800;color:var(--accent);} .contact{color:#4b5563;margin:6px 0 24px;} h2{font-size:13px;letter-spacing:1.2px;color:#111;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin:20px 0 10px;} h3{margin:0 0 4px;font-size:16px;color:#111;} .item{margin:12px 0;} .muted{color:#6b7280;font-style:italic;} .skills{display:flex;flex-wrap:wrap;gap:8px;} .skill{background:#f3f4f6;border-radius:16px;padding:6px 10px;font-size:12px;color:#111;}`
   };
 
   const css = cssByStyle[selectedStyle] || cssByStyle['profesional'];
@@ -3676,3 +3678,36 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+// Foto de perfil: manejo de subida y preview
+const photoInput = document.getElementById('photo-input');
+const photoPreview = document.getElementById('photo-preview');
+let photoDataUrl = '';
+
+if (photoInput) {
+  photoInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      photoDataUrl = reader.result;
+      if (photoPreview) {
+        photoPreview.src = photoDataUrl;
+        photoPreview.style.display = 'block';
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Navegación entre pasos: back buttons
+function setupBackButtons() {
+  const backTo1 = document.getElementById('back-to-step1');
+  const backTo2 = document.getElementById('back-to-step2');
+  const backTo3 = document.getElementById('back-to-step3');
+  if (backTo1) backTo1.addEventListener('click', () => sections[0].scrollIntoView({ behavior: 'smooth' }));
+  if (backTo2) backTo2.addEventListener('click', () => sections[1].scrollIntoView({ behavior: 'smooth' }));
+  if (backTo3) backTo3.addEventListener('click', () => sections[2].scrollIntoView({ behavior: 'smooth' }));
+}
+
+document.addEventListener('DOMContentLoaded', setupBackButtons);
